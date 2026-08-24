@@ -835,7 +835,7 @@ var S = null;
 /* 部署后由脚本填入公开链接；非空时「我的」里会出现可复制的嵌入地址 */
 var EMBED_URL = '';
 
-function blank(){ return { version:VERSION, goals:[], records:[], nodes:[], weekly:{}, settings:{ tab:'today', bannerHideUntil:0, drafts:{}, punch:{}, statusByDate:{}, mapView:{ focus:'center', dir:null, node:null }, todayFilter:'today', todayFocusNode:null } }; }
+function blank(){ return { version:VERSION, goals:[], records:[], nodes:[], weekly:{}, settings:{ tab:'today', bannerHideUntil:0, drafts:{}, punch:{}, statusByDate:{}, mapView:{ focus:'center', dir:null, node:null }, todayFilter:'today', todayFocusNode:null, mitLog:[], dailyLog:[] } }; }
 
 /* 归一化 / 旧版本迁移：把任何历史形态的数据整理成当前结构 */
 function normalize(raw){
@@ -902,6 +902,7 @@ function normalize(raw){
         var status = ['reading','done','paused'].indexOf(b.status)>=0 ? b.status : 'reading';
         return {
           id: b.id || uid(),
+          type: (b.type && CONTENT_TYPES[b.type]) ? b.type : 'book',
           title: String(b.title || '未命名书').slice(0,120),
           author: String(b.author || '').slice(0,80),
           total: Number(b.total || 0) || 0,
@@ -954,6 +955,8 @@ function normalize(raw){
   out.settings = Object.assign(blank().settings, st);
   if(!out.settings.drafts || typeof out.settings.drafts !== 'object') out.settings.drafts = {};
   if(!out.settings.punch || typeof out.settings.punch !== 'object') out.settings.punch = {};
+  if(!Array.isArray(out.settings.mitLog)) out.settings.mitLog = [];
+  if(!Array.isArray(out.settings.dailyLog)) out.settings.dailyLog = [];
   if(Number(raw.version||0) !== VERSION) changed++;
   out.__migrated = changed;
   return out;
@@ -1507,23 +1510,38 @@ function seed(){
 /* ---------------------------- 3. 计算核心 ---------------------------- */
 function recsOf(gid){ return S.records.filter(function(r){ return r.goalId === gid; }); }
 
-/* —— 书单工具（useBooks 读书目标专用）—— */
+/* —— 内容清单工具（useBooks 内容追踪目标通用：书/剧/课程/播客/游戏）—— */
+var CONTENT_TYPES = {
+  book:    { n:'书',   ct:'本', creator:'作者', total:'总页数', name:'书名',   st:['在读','读完','搁置'] },
+  show:    { n:'剧',   ct:'部', creator:'导演', total:'总集数', name:'剧名',   st:['在追','看完','弃剧'] },
+  course:  { n:'课程', ct:'门', creator:'讲师', total:'总节数', name:'课程名', st:['在学','学完','搁置'] },
+  podcast: { n:'播客', ct:'档', creator:'主播', total:'总期数', name:'播客名', st:['在听','听完','搁置'] },
+  game:    { n:'游戏', ct:'款', creator:'平台', total:'总时长', name:'游戏名', st:['在玩','通关','搁置'] }
+};
+function ctype(t){ return CONTENT_TYPES[t] || CONTENT_TYPES.book; }
+function ctypeLabel(t){ return ctype(t).n; }
+function ctypeOptions(sel){
+  return Object.keys(CONTENT_TYPES).map(function(k){
+    return '<option value="'+k+'"'+(k===sel?' selected':'')+'>'+CONTENT_TYPES[k].n+'</option>';
+  }).join('');
+}
 function booksOf(g){ return (g && Array.isArray(g.books)) ? g.books : []; }
 function bookById(g, bid){ var bs = booksOf(g); for(var i=0;i<bs.length;i++){ if(bs[i].id===bid) return bs[i]; } return null; }
-function bookProgress(g, bid){                 /* 某书的打卡记录（已读页数 + 倒序时间线） */
+function bookProgress(g, bid){                 /* 某内容的打卡记录（已读/已看量 + 倒序时间线） */
   var rs = recsOf(g.id).filter(function(r){ return r.bookId === bid; });
   rs.sort(function(a,b){ return a.date < b.date ? 1 : (a.date > b.date ? -1 : 0); });
   var read = 0; rs.forEach(function(r){ read += Number(r.amount)||0; });
   return { read: Math.round(read*100)/100, records: rs };
 }
 function useBooksGoals(){ return S.goals.filter(function(g){ return g.useBooks; }); }
-function bookStatusText(s){ return s==='done'?'读完':(s==='paused'?'搁置':'在读'); }
+function bookStatusText(b){ var t = ctype(b && b.type); return b.status==='done'?t.st[1]:(b.status==='paused'?t.st[2]:t.st[0]); }
 /* 打卡时「＋ 新建书」快捷表单 */
 function openNewBookSheet(gid){
-  openSheet('新建书',
-    '<div style="margin-bottom:10px"><div class="lbl">书名 *</div><input class="inp" id="nb-title" placeholder="如《人类简史》"></div>'+
-    '<div style="margin-bottom:10px"><div class="lbl">作者（选填）</div><input class="inp" id="nb-author" placeholder="尤瓦尔·赫拉利"></div>'+
-    '<div><div class="lbl">总页数（选填，用于书内进度环）</div><input class="inp" id="nb-total" type="number" min="0" inputmode="numeric" placeholder="440"></div>',
+  openSheet('添加内容',
+    '<div style="margin-bottom:10px"><div class="lbl">类型</div><select class="inp" id="nb-type">'+ctypeOptions('book')+'</select></div>'+
+    '<div style="margin-bottom:10px"><div class="lbl">名称 *</div><input class="inp" id="nb-title" placeholder="如《人类简史》"></div>'+
+    '<div style="margin-bottom:10px"><div class="lbl">作者 / 导演 / 讲师（选填）</div><input class="inp" id="nb-author" placeholder="尤瓦尔·赫拉利"></div>'+
+    '<div><div class="lbl">总量（选填，用于进度环；单位跟随目标）</div><input class="inp" id="nb-total" type="number" min="0" inputmode="numeric" placeholder="440"></div>',
     '<button class="btn" data-act="close-modal">取消</button>'+
     '<button class="btn pri" data-act="save-book">添加</button>',
     { gid: gid });
@@ -1534,9 +1552,10 @@ function openEditBookSheet(gid, bid){
   var b = g ? bookById(g, bid) : null;
   if(!g || !b) return;
   openSheet('编辑《'+b.title+'》',
-    '<div style="margin-bottom:10px"><div class="lbl">书名 *</div><input class="inp" id="eb-title" placeholder="书名" value="'+esc(b.title)+'"></div>'+
-    '<div style="margin-bottom:10px"><div class="lbl">作者（选填）</div><input class="inp" id="eb-author" placeholder="作者" value="'+esc(b.author||'')+'"></div>'+
-    '<div><div class="lbl">总页数（选填，用于书内进度环）</div><input class="inp" id="eb-total" type="number" min="0" inputmode="numeric" placeholder="440" value="'+(b.total?b.total:'')+'"></div>',
+    '<div style="margin-bottom:10px"><div class="lbl">类型</div><select class="inp" id="eb-type">'+ctypeOptions(b.type||'book')+'</select></div>'+
+    '<div style="margin-bottom:10px"><div class="lbl">名称 *</div><input class="inp" id="eb-title" placeholder="名称" value="'+esc(b.title)+'"></div>'+
+    '<div style="margin-bottom:10px"><div class="lbl">作者 / 导演 / 讲师（选填）</div><input class="inp" id="eb-author" placeholder="作者" value="'+esc(b.author||'')+'"></div>'+
+    '<div><div class="lbl">总量（选填，用于进度环）</div><input class="inp" id="eb-total" type="number" min="0" inputmode="numeric" placeholder="440" value="'+(b.total?b.total:'')+'"></div>',
     '<button class="btn" data-act="close-modal">取消</button>'+
     '<button class="btn pri" data-act="save-edit-book" data-id="'+gid+'" data-bid="'+bid+'">保存修改</button>',
     { gid: gid, bid: bid });
@@ -1828,7 +1847,7 @@ function confetti(){
 /* ---------------------------- 6. Tab 导航 ---------------------------- */
 var TABS = [
   { k:'today', n:'今日', i:'home' },
-  { k:'books', n:'读书', i:'book' },
+  { k:'books', n:'书影音', i:'book' },
   { k:'map',   n:'成长地图', i:'map' },
   { k:'board', n:'看板', i:'board' },
   { k:'week',  n:'周报', i:'week' },
@@ -2000,15 +2019,15 @@ function punchBlock(c){
     var curBook = dft.bookId || '';
     var bopts = '';
     booksOf(g).forEach(function(b){
-      bopts += '<option value="'+b.id+'"'+(b.id===curBook?' selected':'')+'>'+esc(b.title)+(b.author?(' · '+esc(b.author)):'')+'（'+bookStatusText(b.status)+'）</option>';
+      bopts += '<option value="'+b.id+'"'+(b.id===curBook?' selected':'')+'>'+esc(b.title)+(b.author?(' · '+esc(b.author)):'')+'（'+bookStatusText(b)+'）</option>';
     });
     var noBook = booksOf(g).length === 0;
     bookMissing = !curBook || curBook === '__new__' || !bookById(g, curBook);
-    bookRow = '<div class="prow" style="margin-bottom:6px;align-items:flex-end"><div style="flex:1"><div class="lbl">读哪本书（必选）</div>'+
+    bookRow = '<div class="prow" style="margin-bottom:6px;align-items:flex-end"><div style="flex:1"><div class="lbl">选哪个内容（必选）</div>'+
       '<select class="inp" data-act="punch-input" data-f="bookId" data-id="'+g.id+'">'+
-      '<option value=""'+(!curBook?' selected':'')+'>'+(noBook?'还没添加书，选下方「新建书」':'选一本在读的书')+'</option>'+
-      bopts+'<option value="__new__">＋ 新建书…</option></select>'+
-      (bookMissing?'<div class="tiny" style="margin-top:5px;color:var(--rd)">'+ic('alert',12)+' 请先选择一本在读的书，或选「新建书」添加一本</div>':'')+
+      '<option value=""'+(!curBook?' selected':'')+'>'+(noBook?'还没添加内容，选下方「新建内容」':'选一个进行中的内容')+'</option>'+
+      bopts+'<option value="__new__">＋ 新建内容…</option></select>'+
+      (bookMissing?'<div class="tiny" style="margin-top:5px;color:var(--rd)">'+ic('alert',12)+' 请先选择一个进行中的内容，或选「新建内容」添加一个</div>':'')+
       '</div></div>';
   }
   var btnDisabled = g.useBooks && bookMissing;
@@ -2204,6 +2223,17 @@ function renderToday(){
 function mitState(){
   var T = todayStr();
   var m = S.settings.mit;
+  if(m && m.date && m.date !== T){
+    /* 跨天：先把昨天的三件事归档（只要有任意一条有文字或已完成） */
+    var has = (m.items||[]).some(function(x){ return (x.text && x.text.trim()) || x.done; });
+    if(has){
+      S.settings.mitLog = S.settings.mitLog || [];
+      S.settings.mitLog.push({ date:m.date, items:(m.items||[]).map(function(x){ return { text:(x.text||'').trim(), done:!!x.done }; }) });
+      if(S.settings.mitLog.length > 400) S.settings.mitLog = S.settings.mitLog.slice(-400);
+    }
+    m = S.settings.mit = { date:T, items:[{text:'',done:false},{text:'',done:false},{text:'',done:false}] };
+    save();
+  }
   if(!m || m.date !== T){ m = S.settings.mit = { date:T, items:[{text:'',done:false},{text:'',done:false},{text:'',done:false}] }; }
   else if(!m.items || m.items.length === 0){ m.items = [{text:'',done:false},{text:'',done:false},{text:'',done:false}]; }
   while(m.items.length < 3) m.items.push({ text:'', done:false });
@@ -2213,6 +2243,17 @@ function mitState(){
 function dailyState(){
   var T = todayStr();
   var d = S.settings.daily;
+  if(d && d.date && d.date !== T){
+    /* 跨天：先把昨天的复盘归档（只要写了内容） */
+    var has = (d.goods && d.goods.trim()) || (d.tomorrow && d.tomorrow.trim());
+    if(has){
+      S.settings.dailyLog = S.settings.dailyLog || [];
+      S.settings.dailyLog.push({ date:d.date, goods:(d.goods||'').trim(), tomorrow:(d.tomorrow||'').trim() });
+      if(S.settings.dailyLog.length > 400) S.settings.dailyLog = S.settings.dailyLog.slice(-400);
+    }
+    d = S.settings.daily = { date:T, goods:'', tomorrow:'' };
+    save();
+  }
   if(!d || d.date !== T) d = S.settings.daily = { date:T, goods:'', tomorrow:'' };
   return d;
 }
@@ -2239,6 +2280,53 @@ function renderDaily(){
       '<div class="tiny" style="margin:10px 0 6px">明天最想改进 / 专注的一件事</div>'+
       '<textarea class="inp daily-ta" rows="2" placeholder="只写一件，明天就盯着它。" data-act="daily-tomorrow">'+esc(d.tomorrow)+'</textarea>'+
     '</div></div>';
+}
+/* —— 每日回顾：三件事 + 复盘的跨天归档，按日期倒序回看 —— */
+function reviewLog(){
+  var byDate = {};
+  (Array.isArray(S.settings.mitLog)?S.settings.mitLog:[]).forEach(function(m){ if(m && m.date){ (byDate[m.date]=byDate[m.date]||{}).mit=m; } });
+  (Array.isArray(S.settings.dailyLog)?S.settings.dailyLog:[]).forEach(function(d){ if(d && d.date){ (byDate[d.date]=byDate[d.date]||{}).daily=d; } });
+  return Object.keys(byDate).sort(function(a,b){ return a<b?1:(a>b?-1:0); }).map(function(date){ return { date:date, mit:byDate[date].mit, daily:byDate[date].daily }; });
+}
+function renderReview(){
+  var days = reviewLog();
+  if(!days.length){
+    return '<div class="empty">'+ic('clock',28)+'<div style="margin-top:8px;font-weight:600">还没有历史回顾</div>'+
+      '<div class="tiny muted" style="margin-top:6px;max-width:340px">从今天开始，每天在「今日」页记录三件事和复盘，跨天后会自动归档到这里，随时回来翻看。</div></div>';
+  }
+  var html = '';
+  days.forEach(function(day){
+    html += '<div class="card wide" style="margin-bottom:12px">'+
+      '<div class="tiny" style="font-weight:700;color:var(--muted);margin-bottom:8px">'+md(day.date)+'</div>';
+    if(day.mit){
+      var done = day.mit.items.filter(function(x){ return x.done; }).length;
+      var filled = day.mit.items.filter(function(x){ return x.text; }).length;
+      html += '<div class="tiny" style="margin-bottom:4px">今日三件事 · 完成 <b>'+done+'/'+filled+'</b></div>';
+      day.mit.items.forEach(function(it){
+        if(!it.text) return;
+        html += '<div style="display:flex;gap:8px;align-items:flex-start;padding:3px 0;font-size:13px">'+
+          '<span style="flex:0 0 auto;width:16px;height:16px;border-radius:5px;display:inline-grid;place-items:center;margin-top:1px;'+(it.done?'background:var(--gr);color:#fff':'border:1.5px solid var(--line2);color:transparent')+'">'+ic('check',10)+'</span>'+
+          '<span'+(it.done?' style="color:var(--ink2);text-decoration:line-through"':'')+'>'+esc(it.text)+'</span></div>';
+      });
+    }
+    if(day.daily){
+      html += '<div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--line2)">';
+      if(day.daily.goods){
+        html += '<div class="tiny" style="margin-bottom:2px;color:var(--muted)">三件好事</div>'+
+          '<div style="font-size:13px;line-height:1.6;white-space:pre-wrap">'+esc(day.daily.goods)+'</div>';
+      }
+      if(day.daily.tomorrow){
+        html += '<div class="tiny" style="margin:8px 0 2px;color:var(--muted)">明天改进一件事</div>'+
+          '<div style="font-size:13px;line-height:1.6">'+esc(day.daily.tomorrow)+'</div>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+  });
+  return html;
+}
+function openReview(){
+  openSheet('每日回顾', renderReview(), '<button class="btn" data-act="close-modal">关闭</button>', {});
 }
 
 /* ---------------------------- 9. 看板 ---------------------------- */
@@ -2577,6 +2665,7 @@ function renderMe(){
     '<div class="card wide" id="sync-card">'+renderSyncCardInner()+'</div></div>';
 
   html += '<div class="card wide"><div class="melist">'+
+    mi('clock','#eef2ff','#3b82f6','每日回顾','回看过去每天的三件事完成情况与复盘，跨天自动归档。','<button class="btn sm" data-act="open-review">查看</button>')+
     mi('down','var(--pp-soft)','var(--pp)','导出 JSON 备份','把全部目标、记录和周报复盘导成一个文件，换设备或清缓存前务必先导。','<button class="btn pri sm" data-act="export">导出</button>')+
     mi('up','var(--gr-soft)','var(--gr)','导入恢复','读取备份文件。<b>会整份覆盖当前数据</b>，导入前会再确认一次。条数不限。','<button class="btn sm" data-act="import">选择文件</button>')+
     mi('refresh','#eef2ff','#3b82f6','旧版本数据迁移','从早期版本或旧 key 里找数据，补齐缺失字段（障碍/对策/补记标记/分钟）后并入当前结构。','<button class="btn sm" data-act="migrate">扫描并迁移</button>')+
@@ -2623,10 +2712,10 @@ function renderBooks(){
   if(!pane) return;
   var gs = useBooksGoals();
   if(gs.length === 0){
-    pane.innerHTML = '<div class="empty">'+ic('book',28)+'<div style="margin-top:8px;font-weight:600">还没有读书目标</div>'+
-      '<div class="tiny muted" style="margin-top:6px;max-width:340px">把「读完一本书」这类目标勾选<b>「启用书单」</b>，就能在这里按书管理打卡、回溯每本书的感受。</div>'+
-      '<button class="btn pri" style="margin-top:14px" data-act="new-book-goal">'+ic('plus',16)+'新建读书目标</button>'+
-      '<div class="tiny muted" style="margin-top:8px">已有「阅读」目标？去「我的 → 目标」点「调整计划」，勾选「启用书单」即可。</div></div>';
+    pane.innerHTML = '<div class="empty">'+ic('book',28)+'<div style="margin-top:8px;font-weight:600">还没有内容追踪目标</div>'+
+      '<div class="tiny muted" style="margin-top:6px;max-width:340px">把「读书 / 追剧 / 刷课」这类目标勾选<b>「启用内容清单」</b>，就能在这里按书、剧、课程等逐项管理打卡、回溯进度。</div>'+
+      '<button class="btn pri" style="margin-top:14px" data-act="new-book-goal">'+ic('plus',16)+'新建内容目标</button>'+
+      '<div class="tiny muted" style="margin-top:8px">已有「阅读」目标？去「我的 → 目标」点「调整计划」，勾选「启用内容清单」即可。</div></div>';
     return;
   }
   var html = '';
@@ -2639,18 +2728,18 @@ function renderBooks(){
         '<div class="tiny muted">总量进度 '+n1(c.done)+'/'+n1(g.total)+' '+esc(g.unit)+'</div></div>'+
       '<div style="height:6px;background:var(--bg2);border-radius:99px;overflow:hidden;margin:8px 0 12px">'+
         '<div style="height:100%;width:'+pctT+'%;background:'+g.color+';border-radius:99px"></div></div>'+
-      '<button class="btn sm pri" data-act="add-book" data-id="'+g.id+'">'+ic('plus',15)+'添加书</button>';
+      '<button class="btn sm pri" data-act="add-book" data-id="'+g.id+'">'+ic('plus',15)+'添加内容</button>';
     if(books.length === 0){
-      html += '<div class="tiny muted" style="padding:10px 0">还没有书，点上方添加一本开始记录</div>';
+      html += '<div class="tiny muted" style="padding:10px 0">还没有内容，点上方添加一项开始记录</div>';
     } else {
       var groups = [
-        ['在读', books.filter(function(b){return b.status==='reading';})],
-        ['读完', books.filter(function(b){return b.status==='done';})],
+        ['进行中', books.filter(function(b){return b.status==='reading';})],
+        ['已完成', books.filter(function(b){return b.status==='done';})],
         ['搁置', books.filter(function(b){return b.status==='paused';})]
       ];
       groups.forEach(function(grp){
         if(!grp[1].length) return;
-        html += '<div class="tiny" style="margin:14px 0 6px;font-weight:600;color:var(--muted)">'+grp[0]+' · '+grp[1].length+' 本</div>';
+        html += '<div class="tiny" style="margin:14px 0 6px;font-weight:600;color:var(--muted)">'+grp[0]+' · '+grp[1].length+' 项</div>';
         html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">';
         grp[1].forEach(function(b){
           var bp = bookProgress(g, b.id);
@@ -2658,8 +2747,8 @@ function renderBooks(){
           html += '<div class="book-item" data-act="view-book" data-id="'+g.id+'" data-bid="'+b.id+'">'+
             '<div style="width:4px;align-self:stretch;border-radius:99px;background:'+g.color+';flex:0 0 auto"></div>'+
             '<div class="bmeta">'+
-              '<div class="btitle">'+esc(b.title)+'</div>'+
-              (b.author?'<div class="tiny muted bauthor">'+esc(b.author)+'</div>':'')+
+              '<div class="btitle"><span style="font-size:10px;font-weight:600;color:'+g.color+';border:1px solid '+g.color+';border-radius:4px;padding:0 4px;margin-right:5px;vertical-align:1px">'+ctypeLabel(b.type)+'</span>'+esc(b.title)+'</div>'+
+              (b.author?'<div class="tiny muted bauthor">'+esc(ctype(b.type).creator)+'：'+esc(b.author)+'</div>':'')+
               '<div class="tiny bprogress">'+n1(bp.read)+(b.total?('/'+n1(b.total)):'')+' '+esc(g.unit)+(b.total?(' · '+pct+'%'):'')+'</div>'+
             '</div>'+
             '<div class="bring" style="background:conic-gradient('+g.color+' '+pct+'%, var(--bg2) 0)">'+
@@ -2672,7 +2761,7 @@ function renderBooks(){
     /* 未归档阅读（旧记录无 bookId）→ 可补标 */
     var unfiled = recsOf(g.id).filter(function(r){ return !r.bookId; });
     if(unfiled.length){
-      html += '<div class="tiny" style="margin:16px 0 6px;font-weight:600;color:var(--muted)">📝 未归档阅读 · '+unfiled.length+' 条（点补标到书）</div>';
+      html += '<div class="tiny" style="margin:16px 0 6px;font-weight:600;color:var(--muted)">📝 未归档记录 · '+unfiled.length+' 条（点补标到内容）</div>';
       html += '<div style="display:flex;flex-direction:column;gap:6px">';
       unfiled.forEach(function(r){
         html += '<div class="book-unfiled" data-act="reassign-book" data-id="'+g.id+'" data-rid="'+r.id+'">'+
@@ -2697,15 +2786,15 @@ function openBookSheet(g, b){
     '</div>';
   }).join('');
   openSheet('《'+b.title+'》',
-    '<div class="tiny muted" style="line-height:1.7">'+(b.author?esc(b.author)+' · ':'')+n1(bp.read)+(b.total?('/'+n1(b.total)+' '+esc(g.unit)):(' '+esc(g.unit)))+' · 状态：'+bookStatusText(b.status)+'</div>'+
+    '<div class="tiny muted" style="line-height:1.7">'+ctypeLabel(b.type)+' · '+(b.author?esc(b.author)+' · ':'')+n1(bp.read)+(b.total?('/'+n1(b.total)+' '+esc(g.unit)):(' '+esc(g.unit)))+' · 状态：'+bookStatusText(b)+'</div>'+
     '<div style="margin-top:12px">'+
-      (bp.records.length ? rows : '<div class="tiny muted" style="padding:16px 0;text-align:center">还没有这本书的打卡记录</div>')+
+      (bp.records.length ? rows : '<div class="tiny muted" style="padding:16px 0;text-align:center">还没有这项内容的打卡记录</div>')+
     '</div>',
     '<button class="btn sm" data-act="edit-book" data-id="'+g.id+'" data-bid="'+b.id+'">'+ic('edit',14)+'编辑</button>'+
-    '<button class="btn sm" data-act="set-book-status" data-id="'+g.id+'" data-bid="'+b.id+'" data-st="reading">在读</button>'+
-    '<button class="btn sm" data-act="set-book-status" data-id="'+g.id+'" data-bid="'+b.id+'" data-st="done">读完</button>'+
-    '<button class="btn sm" data-act="set-book-status" data-id="'+g.id+'" data-bid="'+b.id+'" data-st="paused">搁置</button>'+
-    '<button class="btn sm dan" data-act="del-book" data-id="'+g.id+'" data-bid="'+b.id+'">删书</button>',
+    '<button class="btn sm" data-act="set-book-status" data-id="'+g.id+'" data-bid="'+b.id+'" data-st="reading">'+ctype(b.type).st[0]+'</button>'+
+    '<button class="btn sm" data-act="set-book-status" data-id="'+g.id+'" data-bid="'+b.id+'" data-st="done">'+ctype(b.type).st[1]+'</button>'+
+    '<button class="btn sm" data-act="set-book-status" data-id="'+g.id+'" data-bid="'+b.id+'" data-st="paused">'+ctype(b.type).st[2]+'</button>'+
+    '<button class="btn sm dan" data-act="del-book" data-id="'+g.id+'" data-bid="'+b.id+'">删除</button>',
     {});
 }
 function mi(icon,bg,fg,title,desc,btn){
@@ -2770,7 +2859,7 @@ function goalForm(g, presetNode, extra){
       '<div class="fitbox" id="f-fit">'+
         Object.keys(FIT_LABELS).map(function(k){ var slot = TIME_SLOTS.filter(function(s){ return s.fit===k; })[0]; return '<label class="fit"><input type="checkbox" data-act="gf" data-fit="'+k+'"'+(fitTimes.indexOf(k)>=0?' checked':'')+'> '+FIT_LABELS[k]+(slot?'<small class="tiny muted"> '+slot.range+'</small>':'')+'</label>'; }).join('')+
       '</div></div>'+
-    '<div class="field" style="margin-bottom:0"><label class="fit"><input type="checkbox" id="f-usebooks" data-act="gf"'+(useBooks?' checked':'')+'> 启用书单 <span class="tiny muted">读书类目标：打卡按书归类，可回溯每本书的感受（在「读书」页管理书单）</span></label></div>'+
+    '<div class="field" style="margin-bottom:0"><label class="fit"><input type="checkbox" id="f-usebooks" data-act="gf"'+(useBooks?' checked':'')+'> 启用内容清单 <span class="tiny muted">内容类目标（读书/追剧/刷课等）：打卡按「书、剧、课程」逐项归类，可回溯进度（在「书影音」页管理）</span></label></div>'+
     '<input type="hidden" id="f-color" value="'+esc(color)+'"><input type="hidden" id="f-id" value="'+esc(isNew?'':g.id)+'">';
 }
 function openGoalModal(g, presetNode, extra){
@@ -2843,7 +2932,7 @@ function doPunch(gid){
 
   var cnt = (d.content != null ? String(d.content) : '').trim().slice(0,300);
   var bookId = (g.useBooks ? (d.bookId || null) : null);   /* 读书目标按选书归类 */
-  if(g.useBooks && (!bookId || bookId === '__new__' || !bookById(g, bookId))){ toast('选一本在读的书'); return; }
+  if(g.useBooks && (!bookId || bookId === '__new__' || !bookById(g, bookId))){ toast('选一个进行中的内容'); return; }
   S.records.push({ id:uid(), goalId:gid, date:date, amount:Math.round(amt*100)/100, minutes:min, content:cnt, backfill:isBack, createdAt:nowLocal(), bookId:bookId });
   if(S.settings.punch) delete S.settings.punch[gid];
   save();
@@ -3008,7 +3097,7 @@ function loadIntel(){
 /* ---------------------------- 14. 导入导出 ---------------------------- */
 function exportJSON(){
   var payload = { app:'goal-hub', version:VERSION, exportedAt:new Date().toISOString(),
-    goals:S.goals, records:S.records, nodes:S.nodes, weekly:S.weekly, settings:{ tab:S.settings.tab } };
+    goals:S.goals, records:S.records, nodes:S.nodes, weekly:S.weekly, settings:{ tab:S.settings.tab, mit:S.settings.mit, daily:S.settings.daily, mitLog:S.settings.mitLog, dailyLog:S.settings.dailyLog } };
   var blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' });
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
@@ -3038,6 +3127,8 @@ function handleImport(text){
       if(!S.settings.punch) S.settings.punch = {};
       if(!S.settings.drafts) S.settings.drafts = {};
       if(!S.settings.statusByDate) S.settings.statusByDate = {};
+      if(!Array.isArray(S.settings.mitLog)) S.settings.mitLog = [];
+      if(!Array.isArray(S.settings.dailyLog)) S.settings.dailyLog = [];
       if(!S.settings.mapView || !S.settings.mapView.focus) S.settings.mapView = Object.assign(blank().settings.mapView, S.settings.mapView);
       migrateTasks();
       save(); closeModal(); renderAll();
@@ -3996,7 +4087,7 @@ document.addEventListener('click', function(e){
       var sbg = S.goals.filter(function(x){return x.id===sbgid;})[0];
       if(!sbg){ closeModal(); return; }
       sbg.books = sbg.books || [];
-      var nb = { id:uid(), title:sbt, author:(($('#nb-author')||{}).value||'').trim(), total:Number(($('#nb-total')||{}).value)||0, status:'reading', startedAt:todayStr() };
+      var nb = { id:uid(), type:(($('#nb-type')||{}).value)||'book', title:sbt, author:(($('#nb-author')||{}).value||'').trim(), total:Number(($('#nb-total')||{}).value)||0, status:'reading', startedAt:todayStr() };
       sbg.books.push(nb);
       S.settings.punch = S.settings.punch||{}; S.settings.punch[sbgid]=S.settings.punch[sbgid]||{}; S.settings.punch[sbgid].bookId = nb.id;
       save(); closeModal(); renderAll(); toast('已添加《'+sbt+'》');
@@ -4008,6 +4099,7 @@ document.addEventListener('click', function(e){
       if(vbg && vbb) openBookSheet(vbg, vbb);
       break;
     }
+    case 'open-review': openReview(); break;
     case 'add-book': openNewBookSheet(id); break;
     case 'edit-book': openEditBookSheet(id, t.getAttribute('data-bid')); break;
     case 'save-edit-book': {
@@ -4017,6 +4109,7 @@ document.addEventListener('click', function(e){
       var et = (($('#eb-title')||{}).value || '').trim();
       if(!et){ toast('填个书名'); var _ee=$('#eb-title'); if(_ee) _ee.focus(); return; }
       eb.title = et;
+      eb.type = (($('#eb-type')||{}).value) || eb.type || 'book';
       eb.author = (($('#eb-author')||{}).value || '').trim();
       eb.total = Number(($('#eb-total')||{}).value) || 0;
       save(); closeModal(); renderAll(); toast('已保存修改');
@@ -4033,7 +4126,7 @@ document.addEventListener('click', function(e){
       var dbb = dbg ? bookById(dbg, t.getAttribute('data-bid')) : null;
       if(!dbg || !dbb) break;
       confirmSheet('删除《'+dbb.title+'》？',
-        '<div style="font-size:14px;line-height:1.7">这本书会从书单移除。<b>历史打卡记录会保留</b>，转为「未归档阅读」，可重新归到别的书。</div>',
+        '<div style="font-size:14px;line-height:1.7">这项内容会从清单移除。<b>历史打卡记录会保留</b>，转为「未归档记录」，可重新归到别的内容。</div>',
         '确认删除', function(){
           dbg.books = (dbg.books||[]).filter(function(x){return x.id!==dbb.id;});
           recsOf(dbg.id).forEach(function(r){ if(r.bookId===dbb.id) r.bookId=null; });
@@ -4045,11 +4138,11 @@ document.addEventListener('click', function(e){
       var rbg = S.goals.filter(function(x){return x.id===id;})[0];
       if(!rbg) break;
       var rid = t.getAttribute('data-rid');
-      if(booksOf(rbg).length===0){ toast('先添加一本书再补标'); openNewBookSheet(id); break; }
+      if(booksOf(rbg).length===0){ toast('先添加一项内容再补标'); openNewBookSheet(id); break; }
       var raopts = booksOf(rbg).map(function(b){ return '<option value="'+b.id+'">'+esc(b.title)+'</option>'; }).join('');
-      confirmSheet('归到哪本书',
-        '<div class="lbl">选择书</div><select class="inp" id="ra-sel">'+raopts+'</select>'+
-        '<div class="tiny muted" style="margin-top:8px">这条记录会归到所选书名下（不影响已记页数）。</div>',
+      confirmSheet('归到哪项内容',
+        '<div class="lbl">选择内容</div><select class="inp" id="ra-sel">'+raopts+'</select>'+
+        '<div class="tiny muted" style="margin-top:8px">这条记录会归到所选内容下（不影响已记数量）。</div>',
         '确定', function(){
           var bid = $('#ra-sel') ? $('#ra-sel').value : '';
           var rr = S.records.filter(function(x){return x.id===rid;})[0];
