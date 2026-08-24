@@ -1,2 +1,4 @@
 .workbuddy/
 .trae/
+.test-*.js
+.fruit-*.html

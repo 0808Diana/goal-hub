@@ -403,6 +403,15 @@ textarea.inp{min-height:70px;resize:vertical;line-height:1.55}
 .intel-check.on{background:var(--gr);border-color:var(--gr);color:#fff}
 .intel-check:active{transform:scale(.94)}
 @media(max-width:560px){.intel-ch{gap:7px}.intel-ch .dt{width:108px}.intel-ch .heat{width:44px}.intel-ch .dt input{font-size:12px}.intel-ch .cn b{font-size:13px}}
+/* 水果饮食 · 本月应季 */
+.fruit-season{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.fruit-chip{display:inline-flex;align-items:center;gap:7px;padding:7px 11px 7px 8px;border-radius:13px;background:#fff;border:1px solid var(--line2);transition:.18s}
+.fruit-chip:hover{border-color:#6B8A5E;transform:translateY(-1px)}
+.fruit-chip .fi{width:22px;height:22px;color:#6B8A5E;flex:0 0 auto;display:inline-flex}
+.fruit-chip .fi svg{width:22px;height:22px;display:block}
+.fruit-chip .fi svg .seed{fill:currentColor;stroke:none}
+.fruit-chip .fn{font-size:12.5px;font-weight:600;color:var(--ink)}
+.fruit-chip .fm{font-size:10.5px;color:var(--muted)}
 /* 内容/备注 */
 .rec-note{display:block;font-size:12px;color:var(--ink2);margin-top:2px;line-height:1.5;word-break:break-word}
 .rec-note .lab{color:var(--muted2);font-weight:650;margin-right:3px}
@@ -882,6 +891,7 @@ function normalize(raw){
       createdAt: created,
       isSample: !!g.isSample,
       isIntel: !!g.isIntel,
+      isFruit: !!g.isFruit,
       doneCelebrated: !!g.doneCelebrated,
       dirId: String(g.dirId || g.direction || '').slice(0,12),
       nodeId: String(g.nodeId || g.node || '').slice(0,24),
@@ -1772,6 +1782,56 @@ function ic(name, size, extra){
   return '<svg class="ic" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"'+(extra||'')+'>'+(ICONS[name]||'')+'</svg>';
 }
 
+/* ---------------------------- 水果日历（内置：顺时节应季水果） ----------------------------
+   数据源自 fruit-calendar.html（女生友好 · 水果赏味清单）。months = 自然成熟月份（13+ 表示次年）。
+   苹果全年应季，完整保留。 */
+var MONTHS_CN_FRUIT = ["一月","二月","三月","四月","五月","六月","七月","八月","九月","十月","十一月","十二月"];
+var FRUIT_ICONS = {
+  cherry: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14 C 18 16, 22 14, 24 12"/><path d="M34 14 C 30 16, 26 14, 24 12"/><path d="M24 12 L 24 8"/><circle cx="14" cy="32" r="7"/><circle cx="34" cy="32" r="7"/><path d="M14 25 C 12 22, 12 18, 14 14"/><path d="M34 25 C 36 22, 36 18, 34 14"/></svg>',
+  loquat: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="24" cy="30" rx="9" ry="11"/><path d="M24 19 L 22 13"/><path d="M22 13 L 27 10"/></svg>',
+  blueberry: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="30" r="7"/><circle cx="31" cy="32" r="6"/><circle cx="25" cy="20" r="5"/><path d="M25 15 L 23 13 M25 15 L 27 13 M25 15 L 25 13"/></svg>',
+  peach: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M24 20 C 18 20, 12 24, 12 32 C 12 38, 18 42, 24 42 C 30 42, 36 38, 36 32 C 36 24, 30 20, 24 20 Z"/><path d="M24 20 C 24 17, 22 15, 24 13"/><path d="M24 17 C 27 12, 34 11, 37 14 C 34 17, 30 19, 24 17 Z"/></svg>',
+  apricot: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="30" r="10"/><path d="M24 20 L 24 13"/><path d="M24 13 L 29 10"/></svg>',
+  plum: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="24" cy="30" rx="9" ry="11"/><path d="M24 19 L 23 14"/><path d="M24 19 C 22 16, 19 16, 18 18"/></svg>',
+  prune: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="25" cy="30" rx="8" ry="11" transform="rotate(12 25 30)"/><path d="M23 19 L 20 13"/></svg>',
+  waxapple: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 22 C 16 25, 16 28, 18 32 C 20 36, 28 36, 30 32 C 32 28, 32 25, 30 22 C 28 20, 20 20, 18 22 Z"/><path d="M24 20 L 24 15"/><path d="M24 15 L 21 12"/></svg>',
+  fig: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 21 C 14 25, 14 37, 24 41 C 34 37, 34 25, 30 21 C 26 19, 22 19, 18 21 Z"/><path d="M22 19 C 22 15, 26 15, 26 19"/><path d="M24 17 L 24 12"/></svg>',
+  grape: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M24 14 L 24 18"/><path d="M19 14 C 22 11, 26 11, 29 14"/><circle cx="19" cy="22" r="3.6"/><circle cx="29" cy="22" r="3.6"/><circle cx="24" cy="25" r="3.6"/><circle cx="18" cy="29" r="3.6"/><circle cx="30" cy="29" r="3.6"/><circle cx="24" cy="31" r="3.6"/><circle cx="20" cy="35" r="3.6"/><circle cx="28" cy="35" r="3.6"/></svg>',
+  crabapple: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="31" r="9"/><path d="M24 22 L 24 14"/><path d="M24 14 C 27 9, 33 10, 35 14 C 32 16, 28 17, 24 14 Z"/></svg>',
+  pomegranate: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="31" r="10"/><path d="M17 22 L 17 18 L 20 20 L 22 15 L 24 19 L 26 15 L 28 20 L 31 18 L 31 22"/></svg>',
+  pomelo: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="31" r="11"/><path d="M24 20 L 24 13"/><path d="M24 13 C 27 8, 33 9, 35 13 C 32 15, 28 16, 24 13 Z"/></svg>',
+  winterdate: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M24 14 C 28 14, 32 22, 32 30 C 32 37, 28 41, 24 41 C 20 41, 16 37, 16 30 C 16 22, 20 14, 24 14 Z"/><path d="M24 14 L 24 9"/></svg>',
+  apple: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M24 19 C 20 19, 14 23, 14 31 C 14 37, 20 41, 24 41 C 28 41, 34 37, 34 31 C 34 23, 28 19, 24 19 Z"/><path d="M24 19 L 24 13"/><path d="M24 16 C 27 11, 32 12, 34 15 C 31 17, 28 18, 24 16 Z"/></svg>',
+  orange: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="30" r="10"/><path d="M24 20 L 24 14"/><path d="M24 14 C 27 10, 33 10, 35 14 C 32 16, 28 17, 24 14 Z"/></svg>',
+  ponkan: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="24" cy="31" rx="11" ry="9"/><path d="M24 22 L 24 14"/><path d="M24 14 C 27 10, 33 10, 35 14 C 32 16, 28 17, 24 14 Z"/></svg>',
+  strawberry: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M24 17 C 18 17, 14 21, 16 29 C 18 37, 24 41, 24 41 C 24 41, 30 37, 32 29 C 34 21, 30 17, 24 17 Z"/><path d="M20 15 C 22 12, 26 12, 28 15 C 26 17, 22 17, 20 15 Z"/><circle class="seed" cx="20" cy="25" r="1"/><circle class="seed" cx="28" cy="25" r="1"/><circle class="seed" cx="24" cy="29" r="1"/><circle class="seed" cx="18" cy="31" r="1"/><circle class="seed" cx="30" cy="31" r="1"/><circle class="seed" cx="22" cy="35" r="1"/><circle class="seed" cx="26" cy="35" r="1"/></svg>',
+  papaya: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21 C 14 27, 16 37, 24 39 C 32 37, 34 27, 32 21 C 28 19, 20 19, 16 21 Z"/><path d="M24 39 L 24 13"/><circle class="seed" cx="21" cy="28" r="1.2"/><circle class="seed" cx="27" cy="28" r="1.2"/><circle class="seed" cx="24" cy="32" r="1.2"/></svg>'
+};
+var FRUITS = [
+  { name:"国产樱桃", en:"Cherry", months:[5,6], nature:"温", sugar:"中低", benefit:"花青素+槲皮素抗氧化，高钾改善睡眠，补铁补气血，含叶酸，对皮肤友好", tip:"每日15颗以内，上火体质少吃", icon:"cherry" },
+  { name:"枇杷", en:"Loquat", months:[5,6], nature:"平", sugar:"低糖", benefit:"β-胡萝卜素护眼，低热量，润燥，类黄酮抗氧化，补水通便", tip:"选绒毛完整的成熟果，胃酸多少吃", icon:"loquat" },
+  { name:"蓝莓", en:"Blueberry", months:[6,7,8], nature:"平", sugar:"低糖", benefit:"花青素天花板，强抗氧化护眼抗自由基，热量低，含叶酸", tip:"不要空腹吃", icon:"blueberry" },
+  { name:"水蜜桃 / 油桃", en:"Peach", months:[6,7,8], nature:"温", sugar:"中糖", benefit:"多酚抗氧化，高钾补电解质，果胶膳食纤维护肠道，温和养脾胃", tip:"一天1个，桃毛清洗干净", icon:"peach" },
+  { name:"黄杏", en:"Apricot", months:[6,7], nature:"温", sugar:"中糖", benefit:"β-胡萝卜素，多酚抗氧化，补钾", tip:"不吃生苦杏，少量食用", icon:"apricot" },
+  { name:"李子 · 黑布林", en:"Plum", months:[6,7], nature:"平", sugar:"低糖", benefit:"花青素，有机酸促代谢，热量低", tip:"严禁空腹吃，胃酸多少吃", icon:"plum" },
+  { name:"新鲜西梅（国产）", en:"Prune", months:[8,9], nature:"平", sugar:"中糖", benefit:"山梨糖醇改善便秘，酚类抗氧化，低GI升糖慢", tip:"胀气不要一次多吃", icon:"prune" },
+  { name:"莲雾 · 黑金刚", en:"Wax Apple", months:[5,6,8], nature:"平", sugar:"低糖", benefit:"高含水量，类黄酮抗氧化，热量很低，补水清爽", tip:"味道偏淡，适合夏天解暑", icon:"waxapple" },
+  { name:"无花果", en:"Fig", months:[7,8,9], nature:"平", sugar:"中糖", benefit:"丰富多酚抗氧化，高膳食纤维助肠道蠕动，温和护肠胃", tip:"熟软再吃，生果刺激肠胃", icon:"fig" },
+  { name:"紫葡萄 · 巨峰/夏黑", en:"Grape", months:[8,9,10], nature:"平", sugar:"中糖", benefit:"白藜芦醇+花青素抗氧保护皮肤，益气补津液", tip:"尽量带皮吃，控制分量", icon:"grape" },
+  { name:"沙果 · 花红", en:"Crabapple", months:[8,9], nature:"平", sugar:"中低", benefit:"多酚、有机酸促消化消食，抗氧化", tip:"偏酸，一次2-3个即可，胃酸高少吃", icon:"crabapple" },
+  { name:"软籽石榴", en:"Pomegranate", months:[9,10,11], nature:"温", sugar:"中糖", benefit:"大量多酚花青素抗氧化提亮，富含维K、叶酸", tip:"籽可嚼碎吃下，肠胃弱不要大量嚼籽", icon:"pomegranate" },
+  { name:"柚子 · 蜜柚", en:"Pomelo", months:[9,10,11], nature:"平", sugar:"低糖", benefit:"低糖低GI，维C、柚皮苷抗氧化，含天然叶酸", tip:"服药（降压、避孕药）错开2小时以上食用", icon:"pomelo" },
+  { name:"冬枣", en:"Winter Date", months:[10,11,12], nature:"温", sugar:"中糖", benefit:"维C含量很高，滋养皮肤，补微量元素", tip:"糖分偏高，每天5-8颗即可，切勿多吃", icon:"winterdate" },
+  { name:"苹果 · 红富士", en:"Apple", months:[10,11,12,1,2,3,4,5,6,7,8,9], nature:"平", sugar:"中低", benefit:"果胶保护肠道，槲皮素抗氧化，非常温和百搭", tip:"肠胃不好蒸熟吃也合适", icon:"apple" },
+  { name:"橙子", en:"Orange", months:[11,12,13,14], nature:"平", sugar:"中低", benefit:"维C+果胶抗氧化，促肠道代谢，增强抵抗力，富含叶酸", tip:"不要喝橙汁，直接吃果肉", icon:"orange" },
+  { name:"耙耙柑 / 春见", en:"Ponkan", months:[12,13,14,15], nature:"平", sugar:"中低", benefit:"维C+类黄酮抗氧化，水分足，好消化", tip:"果肉细嫩，不易上火", icon:"ponkan" },
+  { name:"草莓", en:"Strawberry", months:[12,13,14,15,16], nature:"平", sugar:"低糖", benefit:"高维C、叶酸，抗氧化，热量低，帮助代谢", tip:"脾胃弱一次不要超过12颗", icon:"strawberry" },
+  { name:"木瓜（熟）", en:"Papaya", months:[8,9,10], nature:"温", sugar:"低糖", benefit:"β-胡萝卜素，木瓜蛋白酶助分解蛋白质助消化，温润护肠胃", tip:"选完全熟软青黄果，生木瓜刺激性强", icon:"papaya" }
+];
+function fruitNormMonth(m){ return m>12 ? m-12 : m; }
+function fruitInMonth(f, month){ return f.months.some(function(m){ return fruitNormMonth(m)===month; }); }
+function fruitIcon(f){ return FRUIT_ICONS[f.icon]||''; }
+
 /* ---------------------------- 5. 通用 UI ---------------------------- */
 function toast(msg){
   var box = $('#toast');
@@ -2105,7 +2165,7 @@ function goalCardToday(c){
         (g.obstacle?'<div class="pk"><b>障碍</b><span>'+esc(g.obstacle)+'</span></div>':'')+
         (g.plan?'<div class="pk"><b>对策</b><span>'+esc(g.plan)+'</span></div>':'')+
       '</div>' : '')+
-      (g.isIntel ? intelPunch(c) : punchBlock(c))+
+      (g.isIntel ? intelPunch(c) : (g.isFruit ? fruitPunch(c) : punchBlock(c)))+
     '</div>'+
   '</div>';
 }
@@ -2158,6 +2218,7 @@ function renderToday(){
     '<div class="sub">'+md(T)+' 周'+wdOf(T)+' · 共 '+list.length+' 个目标'+(todayTotal?('，今天已记 '+todayTotal+' 次'):'')+'</div></div>'+
     '<button class="btn pri" data-act="new-goal">'+ic('plus',16)+'新建目标</button>'+
     (!intelGoal() ? '<button class="btn" data-act="add-intel" style="margin-left:8px">'+ic('layers',16)+'添加情报阅读任务</button>' : '')+
+    (!fruitGoal() ? '<button class="btn" data-act="add-fruit" style="margin-left:8px">'+ic('leaf',16)+'添加水果饮食任务</button>' : '')+
     '</div>';
 
   html += todayStatus();
@@ -2920,6 +2981,7 @@ function doPunch(gid){
   var c = computeGoal(g);
   var wasComplete = c.complete;
   var d = (S.settings.punch && S.settings.punch[gid]) || {};
+  if(g.isFruit) d.amount = 1;   /* 水果饮食：每次打卡固定记 1 次 */
   var amtRaw = d.amount != null && d.amount !== '' ? d.amount : (c.complete ? '' : n1(c.suggest));
   var amt = Number(amtRaw);
   if(!isFinite(amt) || amt <= 0){ toast('填一个大于 0 的完成量'); var el=$('#pa-'+gid); if(el) el.focus(); return; }
@@ -3043,6 +3105,44 @@ function ensureIntel(){
     items: INTEL_ITEMS.map(function(c){ return { id:uid(), title:c.t, source:c.s, url:c.u, date:c.d, heat:c.h, reason:c.r, cat:c.c, read:false }; })
   };
   S.goals.push(g); save(); renderAll(); toast('已添加「K12 AI 情报阅读」任务');
+}
+
+/* ---------------------------- 13.6 水果饮食（按月应季打卡） ---------------------------- */
+function fruitGoal(){ return S.goals.filter(function(g){ return g.isFruit; })[0]; }
+function ensureFruit(){
+  if(fruitGoal()){ toast('水果饮食任务已经在列表里了'); return; }
+  var T = todayStr();
+  var g = { id:uid(), name:'水果饮食', unit:'次', total:30,
+    deadline: addDays(T, 30), color:'#6B8A5E',
+    obstacle:'总想不起来吃水果，或者随手买了反季的',
+    plan:'如果今天还没吃水果，就按「本月应季」挑一样，下午加餐吃',
+    tags:['水果','饮食'], isSample:false, isIntel:false, isFruit:true, doneCelebrated:false, createdAt:T,
+    cadence:{type:'daily'} };
+  S.goals.push(g); save(); renderAll(); toast('已添加「水果饮食」任务');
+}
+function fruitSeasonHTML(month){
+  var inSeason = FRUITS.filter(function(f){ return fruitInMonth(f, month); });
+  return inSeason.map(function(f){
+    return '<span class="fruit-chip" title="'+esc(f.benefit)+'｜'+esc(f.tip)+'">'+
+      '<span class="fi">'+fruitIcon(f)+'</span>'+
+      '<span class="fn">'+esc(f.name)+'</span>'+
+      '<span class="fm">'+f.nature+'性 · '+f.sugar+'</span></span>';
+  }).join('');
+}
+function fruitPunch(c){
+  var g = c.g;
+  var T = todayStr();
+  var month = Number(T.slice(5,7));
+  var monthKey = T.slice(0,7);
+  var monthCount = recsOf(g.id).filter(function(r){ return String(r.date||'').slice(0,7)===monthKey; }).length;
+  var d = (S.settings.punch && S.settings.punch[g.id]) || {};
+  return '<div class="punch">'+
+    '<div class="suggest-tip">'+ic('leaf',15)+'<span><b>'+MONTHS_CN_FRUIT[month-1]+'</b>应季水果 · 本月已吃 <b>'+monthCount+'</b> 次</span></div>'+
+    '<div class="fruit-season">'+fruitSeasonHTML(month)+'</div>'+
+    '<div style="margin-top:10px"><div class="lbl">今天吃了什么（选填，记一句）</div>'+
+      '<input class="inp" type="text" maxlength="80" data-act="punch-input" data-f="content" data-id="'+g.id+'" placeholder="如：蓝莓一小盒 + 一个苹果" value="'+esc(d.content||'')+'"></div>'+
+    '<button class="btn ok wfull" style="margin-top:10px" data-act="punch" data-id="'+g.id+'">'+ic('check',16)+'吃水果了 · +1 次</button>'+
+  '</div>';
 }
 
 /* 打开时把内嵌的最新 INTEL_ITEMS 同步进情报目标：按标题保留已读状态、刷新总数。
@@ -4042,6 +4142,7 @@ document.addEventListener('click', function(e){
     case 'new-goal': openGoalModal(null); break;
     case 'new-book-goal': openGoalModal(null, null, { useBooks: true }); break;
     case 'add-intel': ensureIntel(); break;
+    case 'add-fruit': ensureFruit(); break;
     case 'edit-goal': {
       var g = S.goals.filter(function(x){ return x.id===id; })[0];
       if(g) openGoalModal(g);
