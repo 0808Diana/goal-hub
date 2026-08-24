@@ -2478,9 +2478,9 @@ function renderBoard(){
   if(list.length === 0){
     html += '<div class="card"><div class="empty"><div class="ei">'+ic('board',24)+'</div><b>看板是空的</b><p>去「今日」建目标，或到「成长地图」里从节点添加目标。</p></div></div>';
   }else{
-    html += '<div class="grid">'+list.map(boardCard).join('')+'</div>';
     html += '<div class="sec"><div class="sec-title">'+ic('chart',15)+'近 14 天投入时长 · 分目标堆叠<span class="line"></span></div>'+
       '<div class="card wide">'+minutesChart()+'</div></div>';
+    html += '<div class="grid">'+list.map(boardCard).join('')+'</div>';
   }
   $('#pane-board').innerHTML = html;
 }
