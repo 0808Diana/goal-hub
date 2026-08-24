@@ -1805,7 +1805,8 @@ var FRUIT_ICONS = {
   orange: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="30" r="10"/><path d="M24 20 L 24 14"/><path d="M24 14 C 27 10, 33 10, 35 14 C 32 16, 28 17, 24 14 Z"/></svg>',
   ponkan: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="24" cy="31" rx="11" ry="9"/><path d="M24 22 L 24 14"/><path d="M24 14 C 27 10, 33 10, 35 14 C 32 16, 28 17, 24 14 Z"/></svg>',
   strawberry: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M24 17 C 18 17, 14 21, 16 29 C 18 37, 24 41, 24 41 C 24 41, 30 37, 32 29 C 34 21, 30 17, 24 17 Z"/><path d="M20 15 C 22 12, 26 12, 28 15 C 26 17, 22 17, 20 15 Z"/><circle class="seed" cx="20" cy="25" r="1"/><circle class="seed" cx="28" cy="25" r="1"/><circle class="seed" cx="24" cy="29" r="1"/><circle class="seed" cx="18" cy="31" r="1"/><circle class="seed" cx="30" cy="31" r="1"/><circle class="seed" cx="22" cy="35" r="1"/><circle class="seed" cx="26" cy="35" r="1"/></svg>',
-  papaya: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21 C 14 27, 16 37, 24 39 C 32 37, 34 27, 32 21 C 28 19, 20 19, 16 21 Z"/><path d="M24 39 L 24 13"/><circle class="seed" cx="21" cy="28" r="1.2"/><circle class="seed" cx="27" cy="28" r="1.2"/><circle class="seed" cx="24" cy="32" r="1.2"/></svg>'
+  papaya: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21 C 14 27, 16 37, 24 39 C 32 37, 34 27, 32 21 C 28 19, 20 19, 16 21 Z"/><path d="M24 39 L 24 13"/><circle class="seed" cx="21" cy="28" r="1.2"/><circle class="seed" cx="27" cy="28" r="1.2"/><circle class="seed" cx="24" cy="32" r="1.2"/></svg>',
+  guava: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M24 16 C 17 16, 13 22, 13 31 C 13 38, 18 42, 24 42 C 30 42, 35 38, 35 31 C 35 22, 31 16, 24 16 Z"/><path d="M24 16 L 24 10"/><path d="M21 16 C 19 13, 16 13, 15 15"/><path d="M27 16 C 29 13, 32 13, 33 15"/><circle cx="18" cy="29" r="1.4"/><circle cx="24" cy="27" r="1.4"/><circle cx="30" cy="29" r="1.4"/><circle cx="20" cy="34" r="1.4"/><circle cx="28" cy="34" r="1.4"/><circle cx="24" cy="32" r="1.4"/></svg>'
 };
 var FRUITS = [
   { name:"国产樱桃", en:"Cherry", months:[5,6], nature:"温", sugar:"中低", benefit:"花青素+槲皮素抗氧化，高钾改善睡眠，补铁补气血，含叶酸，对皮肤友好", tip:"每日15颗以内，上火体质少吃", icon:"cherry" },
@@ -1826,7 +1827,8 @@ var FRUITS = [
   { name:"橙子", en:"Orange", months:[11,12,13,14], nature:"平", sugar:"中低", benefit:"维C+果胶抗氧化，促肠道代谢，增强抵抗力，富含叶酸", tip:"不要喝橙汁，直接吃果肉", icon:"orange" },
   { name:"耙耙柑 / 春见", en:"Ponkan", months:[12,13,14,15], nature:"平", sugar:"中低", benefit:"维C+类黄酮抗氧化，水分足，好消化", tip:"果肉细嫩，不易上火", icon:"ponkan" },
   { name:"草莓", en:"Strawberry", months:[12,13,14,15,16], nature:"平", sugar:"低糖", benefit:"高维C、叶酸，抗氧化，热量低，帮助代谢", tip:"脾胃弱一次不要超过12颗", icon:"strawberry" },
-  { name:"木瓜（熟）", en:"Papaya", months:[8,9,10], nature:"温", sugar:"低糖", benefit:"β-胡萝卜素，木瓜蛋白酶助分解蛋白质助消化，温润护肠胃", tip:"选完全熟软青黄果，生木瓜刺激性强", icon:"papaya" }
+  { name:"木瓜（熟）", en:"Papaya", months:[8,9,10], nature:"温", sugar:"低糖", benefit:"β-胡萝卜素，木瓜蛋白酶助分解蛋白质助消化，温润护肠胃", tip:"选完全熟软青黄果，生木瓜刺激性强", icon:"papaya" },
+  { name:"芭乐 · 番石榴（红心优先）", en:"Guava", months:[8,9,10,11,12,13,14], nature:"平", sugar:"低糖", benefit:"维C远超橙子，多酚抗氧化；膳食纤维丰富促肠道蠕动；低GI控糖减脂友好；含叶酸", tip:"籽硬，胃胀气别嚼籽、挖籽吃肉；不要空腹大量吃；红心花青素比白心高", icon:"guava" }
 ];
 function fruitNormMonth(m){ return m>12 ? m-12 : m; }
 function fruitInMonth(f, month){ return f.months.some(function(m){ return fruitNormMonth(m)===month; }); }
