@@ -1,0 +1,24 @@
+{
+  "updated": "2026-08-10",
+  "note": "K12 AI 情报阅读清单。每月 1 号重搜上月资讯后更新本文件的 items 与 updated；页面运行时自动拉取本文件，改这里无需重新部署、链接不变。字段：title 标题 / source 来源 / url 真实链接 / date 发布日期(YYYY-MM-DD，权威报告无窗口日期可留空，仅在「全部」出现) / heat 热度(0-100) / reason 为什么该读 / cat 分类(政策|产品|资本|国际|深度)。",
+  "items": [
+    { "title": "半年 16 款 AI 教育产品全景盘点：谁在抢跑", "source": "多鲸", "url": "https://www.163.com/dy/article/L1TE2RU10536N2AA.html", "date": "2026-07-15", "heat": 95, "reason": "覆盖学生/教师/志愿/启蒙全场景的横向扫描，信息量最大", "cat": "产品" },
+    { "title": "《“人工智能+教育”行动计划》落地：教师的转型与坚守", "source": "中国青年报", "url": "https://www.toutiao.com/article/7667406024281801259/", "date": "2026-07-28", "heat": 92, "reason": "五部门行动计划配套解读，K12 AI 政策主线", "cat": "政策" },
+    { "title": "学习机集体冲高：万元旗舰、AI 家教、高端竞争", "source": "多鲸资本", "url": "https://dy.163.com/article/L1GK17B305386T63.html", "date": "2026-07-10", "heat": 90, "reason": "学而思T6/讯飞T90/有道X90 集中上新，AI 家教成主线", "cat": "产品" },
+    { "title": "构建基础教育人工智能应用分类分级治理体系", "source": "中国教育新闻网", "url": "http://www.jyb.cn/rmtzcg/xwy/wzxw/202607/t20260722_2111504116.html", "date": "2026-07-22", "heat": 90, "reason": "未成年人分类办法施行后，基础教育 AI 治理权威解读", "cat": "政策" },
+    { "title": "a16z《Top 100 Gen AI Consumer Apps》第 6 版", "source": "a16z", "url": "https://a16z.com/100-gen-ai-apps-6/", "date": "", "heat": 88, "reason": "全球真实使用榜单，看教育类占位与 AI 走出浏览器趋势（权威报告，无窗口日期）", "cat": "国际" },
+    { "title": "Claude for Teachers：Anthropic 把 Claude 免费送进美国 K-12 课堂", "source": "敲代码的猴子", "url": "https://www.toutiao.com/article/7662595780859019839", "date": "2026-07-15", "heat": 86, "reason": "模型厂商教育发布，接 Learning Commons 州课程标准，教师入口战", "cat": "产品" },
+    { "title": "AI 重构教培：一场比双减影响更彻底的产业革命", "source": "芥末堆", "url": "https://www.jiemodui.com/N/139492.html", "date": "2026-07-31", "heat": 85, "reason": "一对一被替代、学习机难成入口、从卖课时到卖结果", "cat": "深度" },
+    { "title": "北京：400 余款教育类 App 完成备案，259 款生成式 AI 大模型纳入监管", "source": "新京报", "url": "https://www.toutiao.com/article/7668272417168556596/", "date": "2026-07-30", "heat": 84, "reason": "教育/AI 类应用备案实数据，直接约束可用技术栈", "cat": "政策" },
+    { "title": "猿辅导发布 AI 大阅读：AI 一对一思辨式伴读", "source": "腾讯财经", "url": "https://new.qq.com/rain/a/20260721A05H8700", "date": "2026-07-21", "heat": 83, "reason": "WAIC 发布，内测主动阅读时长 +67%", "cat": "产品" },
+    { "title": "作业帮发布新一代 AI 学习机 Z100：首创市级“本地学练考”", "source": "大河财立方", "url": "https://www.toutiao.com/article/7662201717253046826/", "date": "2026-07-14", "heat": 82, "reason": "银河大模型 + 本地化考情，C 端主力打法", "cat": "产品" },
+    { "title": "AI 应用周度观察(07.06–07.12)：好未来 T6 开售 / 有道国家科技进步奖", "source": "AI 应用观察", "url": "https://www.163.com/dy/article/L1LFEN1N05568W0A.html", "date": "2026-07-12", "heat": 80, "reason": "大厂新品 + 国际认可 + 有道技术背书周度汇总", "cat": "产品" },
+    { "title": "AI 应用周度观察(07.20–07.26)：芯位学科大模型 V2.0 / 豆包进课堂", "source": "AI 应用观察", "url": "https://www.toutiao.com/a7666720590404813348", "date": "2026-07-26", "heat": 78, "reason": "教育垂直大模型与火山引擎豆包落地快讯", "cat": "产品" },
+    { "title": "上半年 AI 融资盘点：总融资额突破三千亿元", "source": "IT桔子", "url": "https://new.qq.com/rain/a/20260704A021W400", "date": "2026-07-03", "heat": 76, "reason": "上半年融资超去年全年，判断钱在赌什么（7/3，略早于近30天，见“全部”）", "cat": "资本" },
+    { "title": "imagi 获 450 万美元种子轮：与 OpenAI/Lovable 合作的 K12 AI 读写", "source": "多鲸", "url": "https://www.163.com/dy/article/L2L4ADB60536N2AA.html", "date": "2026-07-25", "heat": 74, "reason": "海外 K12 AI 素养融资样本，Brighteye/Day One 领投", "cat": "资本" },
+    { "title": "DeweyLearn 获 500 万美元 A 轮：多模态 AI 评估实操技能", "source": "多知", "url": "https://so.html5.qq.com/page/real/search_news?docid=70000021_3926a69b95352052", "date": "2026-07-28", "heat": 70, "reason": "多模态评估方向，将扩展至 K12", "cat": "资本" },
+    { "title": "EdSurge 播客：AI 作弊恐慌到底在怕什么（微软 2026 教育 AI 报告）", "source": "EdSurge", "url": "https://edsurge.com/news/podcast-what-is-the-ai-cheating-panic-really-about", "date": "2026-07-16", "heat": 68, "reason": "92% 已用 AI，但日常渗透与教师培训仍有缺口", "cat": "国际" },
+    { "title": "EdSurge：AI 遇上 ESL，老师们动心了", "source": "EdSurge", "url": "https://edsurge.com/news/ai-meets-esl-and-teachers-are-intrigued", "date": "2026-07-16", "heat": 66, "reason": "K12 双语学习者的 AI 脚手架，校内落地写得细", "cat": "国际" },
+    { "title": "AI 时代，老登创业者更值钱了", "source": "芥末堆", "url": "https://www.jiemodui.com/N/139464.html", "date": "2026-07-29", "heat": 62, "reason": "观点类：AI 放大“提出问题并对结果负责”的经验价值", "cat": "深度" }
+  ]
+}
