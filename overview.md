@@ -1,11 +1,8 @@
-# 成长工作台 · goal-hub.html 总览（V2 个人成长系统）
+# 成长工作台 · index.html 总览（V2 个人成长系统）
 
-单文件离线工作台 `goal-hub.html`（约 142 KB，0 外部框架/CDN/字体依赖、0 emoji，断网可用，全部 CSS/JS/SVG 内联）。当前版本在「学习目标管理 + K12 AI 情报」地基之上，叠加了 **V2 个人成长系统**：成长地图（方向 → 节点 → 任务）+ 时间节奏（时间槽 + 工作状态）。
+单文件离线工作台 `index.html`（原 `goal-hub.html`，约 142 KB，0 外部框架/CDN/字体依赖、0 emoji，断网可用，全部 CSS/JS/SVG 内联）。当前版本在「学习目标管理 + K12 AI 情报」地基之上，叠加了 **V2 个人成长系统**：成长地图（方向 → 节点 → 任务）+ 时间节奏（时间槽 + 工作状态）。
 
-部署链接（可内嵌 Notion `/embed`，若链接变化在此更新）：
-**https://8209f709ea184362beb73dcf53a8fd82.gz4.agentos-app.net**
-
-> ⚠️ V2.3 重新部署后链接已变更：旧的 `66a4a00fe0f7412b9561e68146182095.sh5.agentos-app.net` 已失效，请改用上方新链接（Notion `/embed` 需同步更新）。
+> 🔄 **2026-08-24 已迁移到 GitHub Pages（固定链接，不再漂移）**：部署链接 **https://0808Diana.github.io/goal-hub/** 。源文件由 `goal-hub.html` 改名 `index.html`（Pages 入口）；情报清单外部化为 `intel.json`（运行时拉取，每月 1 号自动化重搜更新，改此文件无需重新部署）。改代码后 `git push` 即上线，链接永不变。下方历史记录中的旧 CloudStudio 链接（`8209f709…`、`66a4a00f…` 等）均已失效，仅作存档。
 
 ---
 
