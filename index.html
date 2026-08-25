@@ -412,6 +412,20 @@ textarea.inp{min-height:70px;resize:vertical;line-height:1.55}
 .fruit-chip .fi svg .seed{fill:currentColor;stroke:none}
 .fruit-chip .fn{font-size:12.5px;font-weight:600;color:var(--ink)}
 .fruit-chip .fm{font-size:10.5px;color:var(--muted)}
+/* 打卡日历视图 */
+.cal-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.cal-title{font-weight:600;font-size:15px}
+.cal-week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px}
+.cal-week span{text-align:center;font-size:11px;color:var(--muted);padding:4px 0}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal-cell{min-height:56px;border:1px solid var(--line2);border-radius:10px;padding:5px 6px;background:#fff;cursor:pointer;transition:.15s;display:flex;flex-direction:column;gap:3px}
+.cal-cell.empty{border-color:transparent;background:transparent;cursor:default}
+.cal-cell:hover{border-color:var(--pp);transform:translateY(-1px)}
+.cal-cell.today{border-color:var(--pp);background:var(--pp-soft)}
+.cal-num{font-size:12px;font-weight:600;color:var(--ink)}
+.cal-dots{display:flex;flex-wrap:wrap;gap:2px;align-items:center}
+.cal-dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.cal-more{font-size:10px;color:var(--muted)}
 /* 内容/备注 */
 .rec-note{display:block;font-size:12px;color:var(--ink2);margin-top:2px;line-height:1.5;word-break:break-word}
 .rec-note .lab{color:var(--muted2);font-weight:650;margin-right:3px}
@@ -2212,6 +2226,7 @@ function goalRow(c, open){
 function renderToday(){
   var list = allComputed();
   var T = todayStr();
+  var activeCount = list.filter(function(c){ return !c.complete; }).length;
   var alerts = alertCards(list);
   var todayTotal = S.records.filter(function(r){ return r.date === T; }).length;
   var justPunched = !!S._justPunched; S._justPunched = false;   /* 打卡后聚焦卡短暂高亮，让「已更新」可见 */
@@ -2243,26 +2258,19 @@ function renderToday(){
 
   html += '<div class="dailypair">'+renderMIT()+renderDaily()+'</div>';
 
-  html += '<div class="sec"><div class="sec-title">'+ic('target',15)+'我的目标 <span class="cnt">'+list.length+'</span><span class="line"></span>'+
-    '<div class="seg-ctrl" style="margin-left:auto">'+
-      '<button class="seg-btn'+(S.settings.todayFilter!=='all'?' on':'')+'" data-act="today-filter" data-v="today">今日打卡</button>'+
-      '<button class="seg-btn'+(S.settings.todayFilter==='all'?' on':'')+'" data-act="today-filter" data-v="all">全部</button>'+
-    '</div>'+
+  html += '<div class="sec"><div class="sec-title">'+ic('target',15)+'进行中的目标 <span class="cnt">'+activeCount+'</span><span class="line"></span>'+
     '<button class="btn sm ghost" data-act="new-goal" style="margin-left:8px;padding:0 10px">'+ic('plus',14)+'新建</button>'+
     '</div>';
   if(list.length === 0){
     html += '<div class="card"><div class="empty"><div class="ei">'+ic('target',24)+'</div><b>还没有目标</b><p>这里只管有终点的事：2000 个单词、440 页书、48 节课……<br>建一个，剩下的每天该做多少由它自己算。</p><button class="btn pri" style="margin-top:14px" data-act="new-goal">'+ic('plus',16)+'新建第一个目标</button></div></div>';
   }else{
-    /* 筛选逻辑：today 模式只显示待打卡+已打卡，隐藏已达成；focusNode 模式只显示该节点关联目标 */
-    var filtered = list;
+    /* 已完成目标不再出现在今日列表（隐藏，靠看板日历追溯）；focusNode 模式再按节点过滤 */
+    var filtered = list.filter(function(c){ return !c.complete; });
     var focusNode = S.settings.todayFocusNode;
     if(focusNode){
-      filtered = list.filter(function(c){ return c.g.nodeIds && c.g.nodeIds.indexOf(focusNode) >= 0; });
+      filtered = filtered.filter(function(c){ return c.g.nodeIds && c.g.nodeIds.indexOf(focusNode) >= 0; });
       var fn = nodeOf(focusNode);
       html += '<div class="focus-chip-row"><span class="focus-chip">'+ic('pin',13)+' 聚焦：'+esc(fn?fn.name:'节点')+' <button class="fc-x" data-act="clear-today-focus" aria-label="取消聚焦">'+ic('x',12)+'</button></span></div>';
-    }
-    if(S.settings.todayFilter !== 'all' && !focusNode){
-      filtered = list.filter(function(c){ return !c.complete; });
     }
     var groups = groupGoals(filtered, T);
     groups.forEach(function(grp){
@@ -2537,8 +2545,14 @@ function renderBoard(){
   var list = allComputed();
   var html = '<div class="pagehead"><div class="ph-back">'+
     '<button class="btn ghost" data-act="tab" data-k="today" style="padding:4px 8px">'+ic('left',18)+'</button>'+
-    '<h1>看板</h1><div class="sub">每个目标的完成度、节奏和最近的记录</div></div></div>';
-  if(list.length === 0){
+    '<h1>看板</h1><div class="sub">完成度、节奏与打卡日历</div></div></div>';
+  html += '<div class="seg-ctrl" style="margin:0 0 14px">'+
+    '<button class="seg-btn'+(S.settings.boardView!=='calendar'?' on':'')+'" data-act="board-view" data-v="board">看板</button>'+
+    '<button class="seg-btn'+(S.settings.boardView==='calendar'?' on':'')+'" data-act="board-view" data-v="calendar">日历</button>'+
+    '</div>';
+  if(S.settings.boardView === 'calendar'){
+    html += renderCalendar();
+  }else if(list.length === 0){
     html += '<div class="card"><div class="empty"><div class="ei">'+ic('board',24)+'</div><b>看板是空的</b><p>去「今日」建目标，或到「成长地图」里从节点添加目标。</p></div></div>';
   }else{
     html += '<div class="sec"><div class="sec-title">'+ic('chart',15)+'近 14 天投入时长 · 分目标堆叠<span class="line"></span></div>'+
@@ -2546,6 +2560,71 @@ function renderBoard(){
     html += '<div class="grid">'+list.map(boardCard).join('')+'</div>';
   }
   $('#pane-board').innerHTML = html;
+}
+function calMonthKey(){
+  return S.settings.calMonth || todayStr().slice(0,7);
+}
+function shiftCalMonth(delta){
+  var ym = calMonthKey();
+  var y = Number(ym.slice(0,4)), m = Number(ym.slice(5,7)) + delta;
+  if(m < 1){ m = 12; y--; }
+  if(m > 12){ m = 1; y++; }
+  return y + '-' + (m<10?'0'+m:m);
+}
+function renderCalendar(){
+  var ym = calMonthKey();
+  var y = Number(ym.slice(0,4)), m = Number(ym.slice(5,7));
+  var startDow = (new Date(y, m-1, 1).getDay() + 6) % 7;   /* 周一=0 */
+  var daysInMonth = new Date(y, m, 0).getDate();
+  var dayGoals = {};
+  S.records.forEach(function(r){
+    if(!r.date) return;
+    (dayGoals[r.date] = dayGoals[r.date] || []);
+    if(dayGoals[r.date].indexOf(r.goalId) < 0) dayGoals[r.date].push(r.goalId);
+  });
+  var html = '<div class="cal-bar">'+
+    '<button class="btn sm ghost" data-act="cal-prev">'+ic('left',15)+'</button>'+
+    '<div class="cal-title">'+y+' 年 '+m+' 月</div>'+
+    '<button class="btn sm ghost" data-act="cal-next">'+ic('right',15)+'</button>'+
+    '</div>';
+  html += '<div class="cal-week">'+['一','二','三','四','五','六','日'].map(function(w){ return '<span>'+w+'</span>'; }).join('')+'</div>';
+  html += '<div class="cal-grid">';
+  for(var i=0;i<startDow;i++) html += '<div class="cal-cell empty"></div>';
+  for(var d=1; d<=daysInMonth; d++){
+    var date = ym + '-' + (d<10 ? '0'+d : d);
+    var gids = dayGoals[date] || [];
+    var dots = gids.slice(0,6).map(function(gid){
+      var g = goalById(gid);
+      return '<span class="cal-dot" style="background:'+(g?g.color:'#ccc')+'" title="'+esc(g?g.name:'')+'"></span>';
+    }).join('');
+    var more = gids.length > 6 ? '<span class="cal-more">+'+(gids.length-6)+'</span>' : '';
+    var isToday = date === todayStr();
+    html += '<div class="cal-cell'+(isToday?' today':'')+(gids.length?' has':'')+'" data-act="cal-day" data-date="'+date+'">'+
+      '<span class="cal-num">'+d+'</span>'+
+      (gids.length ? '<span class="cal-dots">'+dots+more+'</span>' : '')+
+      '</div>';
+  }
+  html += '</div>';
+  html += '<div class="tiny muted" style="margin-top:10px">每个色点 = 当天打卡的一个目标（含已完成），点日期看详情。</div>';
+  return html;
+}
+function openCalDay(date){
+  var recs = S.records.filter(function(r){ return r.date === date; }).sort(function(a,b){ return (b.minutes||0)-(a.minutes||0); });
+  var body;
+  if(!recs.length){
+    body = '<div class="tiny muted" style="padding:16px;text-align:center">这一天没有打卡记录</div>';
+  }else{
+    body = recs.map(function(r){
+      var g = goalById(r.goalId);
+      return '<div style="padding:9px 0;border-bottom:1px solid var(--line)">'+
+        '<div style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:3px;background:'+(g?g.color:'#ccc')+'"></span>'+
+        '<b style="font-size:13px">'+esc(g?g.name:'（已删除目标）')+'</b></div>'+
+        '<div class="tiny muted" style="margin-top:3px">+'+n1(r.amount)+' '+(g?esc(g.unit):'')+(r.minutes?(' · '+fmtMin(r.minutes)):'')+(r.backfill?' · 补记':'')+'</div>'+
+        (r.content?'<div class="tiny" style="margin-top:3px;color:var(--ink)">'+esc(r.content)+'</div>':'')+
+        '</div>';
+    }).join('');
+  }
+  openSheet(md(date)+' 打卡记录', body, '<button class="btn" data-act="close-modal">关闭</button>', {});
 }
 
 /* ---------------------------- 10. 周报 ---------------------------- */
@@ -4275,6 +4354,25 @@ document.addEventListener('click', function(e){
     case 'today-filter': {
       S.settings.todayFilter = t.getAttribute('data-v') || 'today';
       save(); renderAll();
+      break;
+    }
+    case 'board-view': {
+      S.settings.boardView = t.getAttribute('data-v') || 'board';
+      save(); renderAll();
+      break;
+    }
+    case 'cal-prev': {
+      S.settings.calMonth = shiftCalMonth(-1);
+      save(); renderAll();
+      break;
+    }
+    case 'cal-next': {
+      S.settings.calMonth = shiftCalMonth(1);
+      save(); renderAll();
+      break;
+    }
+    case 'cal-day': {
+      openCalDay(t.getAttribute('data-date'));
       break;
     }
     case 'clear-today-focus': {
