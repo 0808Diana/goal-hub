@@ -4450,12 +4450,12 @@ document.addEventListener('click', function(e){
     case 'confirm-ok': if(modalCtx.onOk) modalCtx.onOk(); else closeModal(); break;
     case 'mit-done': {
       var mit = dayState(curReviewDay()), mi = +t.getAttribute('data-i');
-      if(mit.items[mi]){ mit.items[mi].done = !mit.items[mi].done; save(); refreshDailyView(); }
+      if(mit.mit[mi]){ mit.mit[mi].done = !mit.mit[mi].done; save(); refreshDailyView(); }
       break;
     }
     case 'mit-clear': {
       var mc = dayState(curReviewDay()), mj = +t.getAttribute('data-i');
-      if(mc.items[mj]){ mc.items[mj].text = ''; mc.items[mj].done = false; save(); refreshDailyView(); }
+      if(mc.mit[mj]){ mc.mit[mj].text = ''; mc.mit[mj].done = false; save(); refreshDailyView(); }
       break;
     }
     case 'rv-day': {
@@ -4916,7 +4916,7 @@ document.addEventListener('input', function(e){
   }
   if(act === 'mit-text'){
     var mm = dayState(curReviewDay()), mi = +t.getAttribute('data-i');
-    if(mm.items[mi]){ mm.items[mi].text = t.value; save(); }
+    if(mm.mit[mi]){ mm.mit[mi].text = t.value; save(); }
     return;
   }
   if(act === 'daily-goods'){ dayState(curReviewDay()).goods = t.value; save(); return; }
