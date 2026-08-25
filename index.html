@@ -877,6 +877,7 @@ textarea.inp{min-height:70px;resize:vertical;line-height:1.55}
 .dc-more{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line2);display:flex;flex-direction:column;gap:12px}
 .dc-field-h{display:flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;color:var(--ink2);margin-bottom:5px}
 .dc-field-h .muted2{font-weight:400}
+.dc-disp{font-size:13.5px;line-height:1.65;color:var(--ink);white-space:pre-wrap;background:var(--bg2);border-radius:9px;padding:9px 11px}
 .mitclear-ph{width:26px;min-width:26px}
 
 /* 热力图 */
@@ -2541,7 +2542,7 @@ function renderWeekHero(cw, T, isThis, todayDone){
   var doneCnt = 0, seg = '';
   for(var i=0;i<7;i++){
     var dt = addDays(cw,i), d = D[dt];
-    var done = !!(d && d.done), isFuture = diffDays(dt,T) > 0, isToday = dt === T;
+    var done = !!(d && d.done), isFuture = diffDays(dt,T) < 0, isToday = dt === T;
     if(done) doneCnt++;
     var cls = 'wh-seg'+(done?' done':'')+(isToday?' today':'')+(isFuture?' future':'');
     var inner = done ? ic('check',13) : (isToday ? '今' : wdOf(dt));
@@ -2563,7 +2564,7 @@ function renderWeekHero(cw, T, isThis, todayDone){
 
 function dayCardHTML(dt, T){
   var d = dayState(dt);
-  var isToday = dt === T, isFuture = diffDays(dt,T) > 0, done = d.done;
+  var isToday = dt === T, isFuture = diffDays(dt,T) < 0, done = d.done;
   var mitDone = d.mit.filter(function(x){ return x.done && x.text.trim(); }).length;
   var mitFill = d.mit.filter(function(x){ return x.text.trim(); }).length;
 
@@ -2580,7 +2581,7 @@ function dayCardHTML(dt, T){
   if(isFuture){
     body = '<div class="dc-future tiny muted">'+ic('sun',14)+' 这是未来的日子，到时候再来记～</div>';
   } else {
-    var open = RC_OPEN[dt] !== undefined ? RC_OPEN[dt] : isToday;
+    var open = RC_OPEN[dt] !== undefined ? RC_OPEN[dt] : isToday; /* true=编辑态，false=展示态 */
     var rows = d.mit.map(function(it, idx){
       return '<div class="mit-row'+(it.done?' done':'')+'">'+
         '<button class="mitchk'+(it.done?' on':'')+'" data-act="mit-done" data-d="'+dt+'" data-i="'+idx+'" aria-label="标记完成">'+ic('check',12)+'</button>'+
@@ -2589,24 +2590,43 @@ function dayCardHTML(dt, T){
       '</div>';
     }).join('');
     body = '<div class="mitlist">'+rows+'</div>';
+
     var doneBtn = '<button class="dc-done'+(done?' on':'')+'" data-act="rc-done" data-d="'+dt+'">'+(done?ic('check',13)+'已回顾，点此撤销':ic('check',13)+'完成今日回顾')+'</button>';
-    more = '<div class="dc-more" style="display:'+(open?'block':'none')+'">'+
-      '<div class="dc-field"><div class="dc-field-h">'+ic('star',13)+'今天值得记住的 3 件好事<span class="muted2">（哪怕很小）</span></div>'+
-        '<textarea class="inp daily-ta" rows="2" placeholder="例如：没赖床、读完最难那篇、和朋友聊得开心…" data-act="daily-goods" data-d="'+dt+'">'+esc(d.goods)+'</textarea>'+
-      '</div>'+
-      '<div class="dc-field"><div class="dc-field-h">'+ic('bolt',13)+'明天最想改进 / 专注的一件事</div>'+
-        '<textarea class="inp daily-ta" rows="2" placeholder="只写一件，明天就盯着它。" data-act="daily-tomorrow" data-d="'+dt+'">'+esc(d.tomorrow)+'</textarea>'+
-      '</div>'+
-    '</div>';
-    foot = '<div class="dc-foot">'+doneBtn+'<button class="dc-more-btn" data-act="rwd-toggle" data-d="'+dt+'">'+(open?'收起 ✎':'更多 ✎')+'</button></div>';
+
+    if(open){
+      /* 编辑态：好事 + 明天 用文本框 */
+      more = '<div class="dc-more">'+
+        '<div class="dc-field"><div class="dc-field-h">'+ic('star',13)+'今天值得记住的 3 件好事<span class="muted2">（哪怕很小）</span></div>'+
+          '<textarea class="inp daily-ta" rows="2" placeholder="例如：没赖床、读完最难那篇、和朋友聊得开心…" data-act="daily-goods" data-d="'+dt+'">'+esc(d.goods)+'</textarea>'+
+        '</div>'+
+        '<div class="dc-field"><div class="dc-field-h">'+ic('bolt',13)+'明天最想改进 / 专注的一件事</div>'+
+          '<textarea class="inp daily-ta" rows="2" placeholder="只写一件，明天就盯着它。" data-act="daily-tomorrow" data-d="'+dt+'">'+esc(d.tomorrow)+'</textarea>'+
+        '</div>'+
+      '</div>';
+      foot = '<div class="dc-foot">'+doneBtn+'<button class="dc-more-btn" data-act="rwd-toggle" data-d="'+dt+'">完成编辑</button></div>';
+    } else {
+      /* 展示态：已记录的内容直接呈现在面板上（只读） */
+      var disp = '';
+      if(d.goods && d.goods.trim()){
+        disp += '<div class="dc-field"><div class="dc-field-h">'+ic('star',13)+'今天值得记住的 3 件好事</div><div class="dc-disp">'+esc(d.goods)+'</div></div>';
+      }
+      if(d.tomorrow && d.tomorrow.trim()){
+        disp += '<div class="dc-field"><div class="dc-field-h">'+ic('bolt',13)+'明天最想改进 / 专注的一件事</div><div class="dc-disp">'+esc(d.tomorrow)+'</div></div>';
+      }
+      if(!disp){
+        disp = '<div class="dc-disp muted2 tiny">还没记录「好事」和「明天改进」，点「✎ 编辑」补充～</div>';
+      }
+      more = '<div class="dc-more">'+disp+'</div>';
+      foot = '<div class="dc-foot">'+doneBtn+'<button class="dc-more-btn" data-act="rwd-toggle" data-d="'+dt+'">✎ 编辑</button></div>';
+    }
   }
 
   return '<div class="daycard'+(done?' done':'')+(isToday?' today':'')+(isFuture?' future':'')+'" id="day-'+dt+'">'+
     '<div class="dc-head" data-act="rwd-toggle" data-d="'+dt+'" style="cursor:pointer">'+
-      '<div class="dc-date"><span class="dc-md">'+md(dt).slice(5)+'</span><span class="dc-wd">周'+wdOf(dt)+'</span>'+status+'</div>'+
+      '<div class="dc-date"><span class="dc-md">'+dt.slice(5)+'</span><span class="dc-wd">周'+wdOf(dt)+'</span>'+status+'</div>'+
       '<div class="dc-prog">'+pdots+(!isFuture?'<span class="dc-prog-tx tiny muted">'+mitDone+'/3</span>':'')+'</div>'+
     '</div>'+
-    body + foot + more +
+    body + more + foot +
   '</div>';
 }
 
@@ -2631,7 +2651,7 @@ function renderHeatmap(){
     var col = '<div class="hm-col">';
     for(var r=0;r<7;r++){
       var dt = addDays(start, w*7 + r);
-      if(diffDays(dt, T) > 0){ col += '<span class="hm-cell empty"></span>'; }
+      if(diffDays(dt, T) < 0){ col += '<span class="hm-cell empty"></span>'; }
       else {
         var d = D[dt], lvl = 0;
         if(d){
@@ -2685,7 +2705,7 @@ function renderReviewHistory(){
     wdays.forEach(function(day){
       var d = day.d;
       html += '<div style="padding:4px 0 4px 18px;border-left:2px solid var(--line2);margin-left:8px;font-size:13px">'+
-        '<span class="tiny muted" style="margin-right:6px">'+md(day.date).slice(5)+' 周'+wdOf(day.date)+'</span>'+
+        '<span class="tiny muted" style="margin-right:6px">'+day.date.slice(5)+' 周'+wdOf(day.date)+'</span>'+
         (d.done?'<span class="chip gr" style="font-size:9px;padding:0 3px">✓</span>':'')+
         (d.mit&&d.mit.some(function(x){return x.text})?' · 三件事 '+d.mit.filter(function(x){return x.done}).length+'/'+d.mit.filter(function(x){return x.text}).length:'')+
         (d.goods?' · 有好事':'')+
