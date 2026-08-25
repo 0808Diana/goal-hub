@@ -733,9 +733,31 @@ textarea.inp{min-height:70px;resize:vertical;line-height:1.55}
 }
 
 /* ============ 设计体验：桌面/移动端差异化 + 焦点/按压态 ============ */
-/* 桌面并排、移动堆叠：今日三件事 + 今日复盘 */
-.dailypair{display:grid;gap:14px}
-@media (min-width:768px){ .dailypair{grid-template-columns:1fr 1fr;gap:16px;align-items:start} }
+
+/* ============ 每日回顾（今天页顶部，按天补记） ============ */
+.dailyhub{padding:0;overflow:hidden}
+.dailyhub-body{padding:0 16px 16px}
+.rv-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:16px 16px 0}
+.rv-title{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:800;color:var(--ink)}
+.rv-title svg{color:var(--pp)}
+.rv-switch{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.rv-day{border:1px solid var(--line2);background:var(--bg2);color:var(--muted);border-radius:9px;padding:6px 12px;font-size:12.5px;font-weight:650;cursor:pointer;transition:.14s}
+.rv-day.on{background:var(--pp);border-color:var(--pp);color:#fff}
+.rv-date{border:1px solid var(--line2);border-radius:9px;padding:5px 8px;font-size:12.5px;color:var(--ink2);background:var(--card);font-family:inherit}
+.rv-backfill{display:flex;align-items:center;gap:6px;margin:10px 16px 0;padding:8px 12px;border-radius:10px;background:#fff7e6;border:1px solid #ffe0a3;color:#9a6b18;font-size:12.5px}
+.rv-backfill svg{color:#d99a1e;flex:0 0 auto}
+.rv-meta{font-size:12.5px;color:var(--muted)}
+.rv-meta b{color:var(--ink2)}
+.rv-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:2px}
+.rv-chip{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 0 5px;border:1px solid var(--line);border-radius:10px;background:var(--card);cursor:pointer;transition:.14s;position:relative}
+.rv-chip .d{font-size:13px;font-weight:700;color:var(--ink2)}
+.rv-chip .w{font-size:9.5px;color:var(--muted)}
+.rv-chip .dot{position:absolute;top:4px;right:5px;width:6px;height:6px;border-radius:50%;background:transparent}
+.rv-chip.has .dot{background:var(--pp)}
+.rv-chip.done{border-color:#bfe6c9;background:#eafaf0}
+.rv-chip.done .dot{background:#2faa5b}
+.rv-chip.on{box-shadow:0 0 0 2px var(--pp-soft);border-color:var(--pp)}
+@media(max-width:480px){ .rv-strip{gap:4px} .rv-chip .w{display:none} .rv-chip .d{font-size:12px} }
 
 /* 键盘导航可见焦点（桌面为主） */
 :focus-visible{outline:2px solid var(--pp);outline-offset:2px;border-radius:8px}
@@ -858,7 +880,7 @@ var S = null;
 /* 部署后由脚本填入公开链接；非空时「我的」里会出现可复制的嵌入地址 */
 var EMBED_URL = '';
 
-function blank(){ return { version:VERSION, goals:[], records:[], nodes:[], weekly:{}, settings:{ tab:'today', bannerHideUntil:0, drafts:{}, punch:{}, statusByDate:{}, mapView:{ focus:'center', dir:null, node:null }, todayFilter:'today', todayFocusNode:null, mitLog:[], dailyLog:[] } }; }
+function blank(){ return { version:VERSION, goals:[], records:[], nodes:[], weekly:{}, settings:{ tab:'today', bannerHideUntil:0, drafts:{}, punch:{}, statusByDate:{}, mapView:{ focus:'center', dir:null, node:null }, todayFilter:'today', todayFocusNode:null, days:{}, mitLog:[], dailyLog:[] } }; }
 
 /* 归一化 / 旧版本迁移：把任何历史形态的数据整理成当前结构 */
 function normalize(raw){
@@ -981,11 +1003,35 @@ function normalize(raw){
   if(!out.settings.punch || typeof out.settings.punch !== 'object') out.settings.punch = {};
   if(!Array.isArray(out.settings.mitLog)) out.settings.mitLog = [];
   if(!Array.isArray(out.settings.dailyLog)) out.settings.dailyLog = [];
+  migrateDays(out.settings);
   if(Number(raw.version||0) !== VERSION) changed++;
   out.__migrated = changed;
   return out;
 }
 
+/* 把旧版 今日三件事/复盘（mit/daily/mitLog/dailyLog）合并进按天的 days 映射，支持补记任意一天 */
+function migrateDays(st){
+  st.days = (st.days && typeof st.days === 'object') ? st.days : {};
+  if(Object.keys(st.days).length > 0) return;   /* 已迁移过，不覆盖 */
+  function day(date){
+    return st.days[date] || (st.days[date] = { mit:[{text:'',done:false},{text:'',done:false},{text:'',done:false}], goods:'', tomorrow:'', done:false });
+  }
+  if(st.mit && st.mit.date){
+    var a = day(st.mit.date);
+    a.mit = (st.mit.items||[]).map(function(x){ return { text:(x.text||'').trim(), done:!!x.done }; });
+  }
+  if(st.daily && st.daily.date){
+    var b = day(st.daily.date);
+    b.goods = (st.daily.goods||'').trim();
+    b.tomorrow = (st.daily.tomorrow||'').trim();
+  }
+  (st.mitLog||[]).forEach(function(m){ if(m && m.date){ var d = day(m.date); d.mit = (m.items||[]).map(function(x){ return { text:(x.text||'').trim(), done:!!x.done }; }); } });
+  (st.dailyLog||[]).forEach(function(m){ if(m && m.date){ var d = day(m.date); d.goods = (m.goods||'').trim(); d.tomorrow = (m.tomorrow||'').trim(); } });
+  Object.keys(st.days).forEach(function(k){
+    var d = st.days[k];
+    d.done = !!(d.goods && d.goods.trim()) || !!(d.tomorrow && d.tomorrow.trim()) || d.mit.some(function(x){ return x.text && x.text.trim(); });
+  });
+}
 var DATA_WARNED = false;
 function load(){
   var raw = null;
@@ -2256,7 +2302,7 @@ function renderToday(){
   }
   html += '</div>';
 
-  html += '<div class="dailypair">'+renderMIT()+renderDaily()+'</div>';
+  html += renderDailyHub();
 
   html += '<div class="sec"><div class="sec-title">'+ic('target',15)+'进行中的目标 <span class="cnt">'+activeCount+'</span><span class="line"></span>'+
     '<button class="btn sm ghost" data-act="new-goal" style="margin-left:8px;padding:0 10px">'+ic('plus',14)+'新建</button>'+
@@ -2290,105 +2336,124 @@ function renderToday(){
   $('#pane-today').innerHTML = html;
 }
 
-/* ---------- 今日三件事（MIT / 吃青蛙） + 每日复盘 ---------- */
-function mitState(){
-  var T = todayStr();
-  var m = S.settings.mit;
-  if(m && m.date && m.date !== T){
-    /* 跨天：先把昨天的三件事归档（只要有任意一条有文字或已完成） */
-    var has = (m.items||[]).some(function(x){ return (x.text && x.text.trim()) || x.done; });
-    if(has){
-      S.settings.mitLog = S.settings.mitLog || [];
-      S.settings.mitLog.push({ date:m.date, items:(m.items||[]).map(function(x){ return { text:(x.text||'').trim(), done:!!x.done }; }) });
-      if(S.settings.mitLog.length > 400) S.settings.mitLog = S.settings.mitLog.slice(-400);
-    }
-    m = S.settings.mit = { date:T, items:[{text:'',done:false},{text:'',done:false},{text:'',done:false}] };
-    save();
-  }
-  if(!m || m.date !== T){ m = S.settings.mit = { date:T, items:[{text:'',done:false},{text:'',done:false},{text:'',done:false}] }; }
-  else if(!m.items || m.items.length === 0){ m.items = [{text:'',done:false},{text:'',done:false},{text:'',done:false}]; }
-  while(m.items.length < 3) m.items.push({ text:'', done:false });
-  m.items = m.items.slice(0,3);
-  return m;
-}
-function dailyState(){
-  var T = todayStr();
-  var d = S.settings.daily;
-  if(d && d.date && d.date !== T){
-    /* 跨天：先把昨天的复盘归档（只要写了内容） */
-    var has = (d.goods && d.goods.trim()) || (d.tomorrow && d.tomorrow.trim());
-    if(has){
-      S.settings.dailyLog = S.settings.dailyLog || [];
-      S.settings.dailyLog.push({ date:d.date, goods:(d.goods||'').trim(), tomorrow:(d.tomorrow||'').trim() });
-      if(S.settings.dailyLog.length > 400) S.settings.dailyLog = S.settings.dailyLog.slice(-400);
-    }
-    d = S.settings.daily = { date:T, goods:'', tomorrow:'' };
-    save();
-  }
-  if(!d || d.date !== T) d = S.settings.daily = { date:T, goods:'', tomorrow:'' };
+/* ---------- 每日回顾：三件事 + 复盘，按「天」存储，可补记任意过往一天 ---------- */
+var REVIEW_DAY = null;
+function curReviewDay(){ return (REVIEW_DAY && /^\d{4}-\d{2}-\d{2}$/.test(REVIEW_DAY)) ? REVIEW_DAY : todayStr(); }
+function dayState(date){
+  date = date || todayStr();
+  var D = S.settings.days = S.settings.days || {};
+  if(!D[date]) D[date] = { mit:[{text:'',done:false},{text:'',done:false},{text:'',done:false}], goods:'', tomorrow:'', done:false };
+  var d = D[date];
+  if(!Array.isArray(d.mit) || d.mit.length === 0) d.mit = [{text:'',done:false},{text:'',done:false},{text:'',done:false}];
+  while(d.mit.length < 3) d.mit.push({ text:'', done:false });
+  d.mit = d.mit.slice(0,3);
+  if(typeof d.done !== 'boolean') d.done = false;
+  if(typeof d.goods !== 'string') d.goods = '';
+  if(typeof d.tomorrow !== 'string') d.tomorrow = '';
   return d;
 }
-function renderMIT(){
-  var m = mitState();
-  var done = m.items.filter(function(x){ return x.done && x.text.trim(); }).length;
-  var rows = m.items.map(function(it, i){
+/* 兼容旧调用（默认取今天） */
+function mitState(){ return dayState(todayStr()); }
+function dailyState(){ return dayState(todayStr()); }
+function reviewStreak(){
+  var D = S.settings.days || {}, n = 0, d = todayStr();
+  while(D[d] && D[d].done){ n++; d = addDays(d,-1); }
+  return n;
+}
+function renderDailyHub(){
+  var day = curReviewDay(), T = todayStr();
+  var isToday = day === T, yest = addDays(T,-1);
+  var d = dayState(day), done = d.done;
+  var doneCount = d.mit.filter(function(x){ return x.done && x.text.trim(); }).length;
+  var filled = d.mit.filter(function(x){ return x.text.trim(); }).length;
+  var rows = d.mit.map(function(it,i){
     return '<div class="mit-row'+(it.done?' done':'')+'">'+
       '<button class="mitchk'+(it.done?' on':'')+'" data-act="mit-done" data-i="'+i+'" aria-label="标记完成">'+ic('check',12)+'</button>'+
       '<input class="inp mit-inp" type="text" placeholder="第 '+(i+1)+' 件最重要的事…" value="'+esc(it.text)+'" data-act="mit-text" data-i="'+i+'" maxlength="60">'+
       '<button class="mitclear" data-act="mit-clear" data-i="'+i+'" aria-label="清空这一项">'+ic('x',12)+'</button>'+
     '</div>';
   }).join('');
-  return '<div class="sec"><div class="sec-title">'+ic('flag',15)+'今日三件事 <span class="cnt">'+done+'/3</span><span class="line"></span></div>'+
-    '<div class="card"><div class="tiny muted" style="margin-bottom:8px">要事第一：每天只锁定最重要的 3 件，先啃最不想做的那只「青蛙」。</div>'+
-    '<div class="mitlist">'+rows+'</div></div></div>';
-}
-function renderDaily(){
-  var d = dailyState();
-  return '<div class="sec"><div class="sec-title">'+ic('note',15)+'今日复盘<span class="line"></span></div>'+
-    '<div class="card">'+
-      '<div class="tiny" style="margin-bottom:6px">今天值得记住的 3 件好事（哪怕很小）</div>'+
+  var head =
+    '<div class="rv-head">'+
+      '<div class="rv-title">'+ic('note',16)+'<span>每日回顾</span>'+(done?'<span class="chip gr" style="margin-left:7px">已回顾</span>':'')+'</div>'+
+      '<div class="rv-switch">'+
+        '<button class="rv-day'+(isToday?' on':'')+'" data-act="rv-day" data-d="today">今天</button>'+
+        '<button class="rv-day'+(!isToday && day===yest?' on':'')+'" data-act="rv-day" data-d="yesterday">昨天</button>'+
+        '<input type="date" class="rv-date" data-act="rv-date" value="'+day+'" max="'+T+'">'+
+      '</div>'+
+    '</div>';
+  var backfill = isToday ? '' :
+    '<div class="rv-backfill">'+ic('edit',14)+' 补记模式：你在补记 <b>'+md(day)+'</b> 的回顾，填写不影响今天，可随时回看。</div>';
+  var meta = '<div class="rv-meta">'+md(day)+' 周'+wdOf(day)+(filled?(' · 三件事完成 <b>'+doneCount+'/'+filled+'</b>'):'')+' · 已连续回顾 <b>'+reviewStreak()+'</b> 天</div>';
+  var doneLabel = done ? '已回顾，点此撤销' : (isToday ? '完成今日回顾' : '完成这一天的回顾');
+  var doneBtn = '<button class="btn '+(done?'ghost':'pri')+' wfull" data-act="rv-done">'+ic('check',15)+ doneLabel+'</button>';
+  return '<div class="sec" id="dailyhub"><div class="card dailyhub">'+head+backfill+
+    '<div class="dailyhub-body">'+meta+
+      '<div class="tiny muted" style="margin:12px 0 6px">今日三件事（要事第一，先啃最不想做的那只「青蛙」）</div>'+
+      '<div class="mitlist">'+rows+'</div>'+
+      '<div class="tiny" style="margin:14px 0 6px">今天值得记住的 3 件好事（哪怕很小）</div>'+
       '<textarea class="inp daily-ta" rows="3" placeholder="例如：早上没赖床、把最难的那篇读完、和朋友聊得开心…" data-act="daily-goods">'+esc(d.goods)+'</textarea>'+
       '<div class="tiny" style="margin:10px 0 6px">明天最想改进 / 专注的一件事</div>'+
       '<textarea class="inp daily-ta" rows="2" placeholder="只写一件，明天就盯着它。" data-act="daily-tomorrow">'+esc(d.tomorrow)+'</textarea>'+
-    '</div></div>';
+      '<div style="margin-top:12px">'+doneBtn+'</div>'+
+      '<div class="rv-strip-wrap"><div class="tiny muted" style="margin:14px 0 6px">最近 14 天（点任一天补记 / 回看）</div>'+reviewStrip()+'</div>'+
+      '<div style="margin-top:12px;text-align:right"><button class="btn sm ghost" data-act="open-review">查看完整历史回顾 ›</button></div>'+
+    '</div>'+
+  '</div></div>';
 }
-/* —— 每日回顾：三件事 + 复盘的跨天归档，按日期倒序回看 —— */
+function reviewStrip(){
+  var D = S.settings.days || {}, T = todayStr(), html = '<div class="rv-strip">', cur = curReviewDay();
+  for(var i=13;i>=0;i--){
+    var dt = addDays(T,-i);
+    var d = D[dt];
+    var has = !!(d && (d.done || (d.mit&&d.mit.some(function(x){ return x.text&&x.text.trim(); })) || (d.goods&&d.goods.trim()) || (d.tomorrow&&d.tomorrow.trim())));
+    var done = !!(d && d.done);
+    html += '<button class="rv-chip'+(dt===cur?' on':'')+(done?' done':'')+(has?' has':'')+'" data-act="rv-strip" data-d="'+dt+'" title="'+md(dt)+'">'+
+      '<span class="d">'+Number(dt.slice(8,10))+'</span>'+
+      '<span class="w">周'+wdOf(dt)+'</span>'+
+      '<span class="dot"></span>'+
+    '</button>';
+  }
+  return html + '</div>';
+}
+/* —— 每日回顾历史：按天回看（读 days 映射）—— */
 function reviewLog(){
-  var byDate = {};
-  (Array.isArray(S.settings.mitLog)?S.settings.mitLog:[]).forEach(function(m){ if(m && m.date){ (byDate[m.date]=byDate[m.date]||{}).mit=m; } });
-  (Array.isArray(S.settings.dailyLog)?S.settings.dailyLog:[]).forEach(function(d){ if(d && d.date){ (byDate[d.date]=byDate[d.date]||{}).daily=d; } });
-  return Object.keys(byDate).sort(function(a,b){ return a<b?1:(a>b?-1:0); }).map(function(date){ return { date:date, mit:byDate[date].mit, daily:byDate[date].daily }; });
+  var D = S.settings.days || {};
+  return Object.keys(D).filter(function(k){ var d=D[k]; return d && (d.done || (d.mit&&d.mit.some(function(x){ return x.text&&x.text.trim(); })) || (d.goods&&d.goods.trim()) || (d.tomorrow&&d.tomorrow.trim())); })
+    .sort(function(a,b){ return a<b?1:(a>b?-1:0); })
+    .map(function(date){ return { date:date, d:D[date] }; });
 }
 function renderReview(){
   var days = reviewLog();
   if(!days.length){
     return '<div class="empty">'+ic('clock',28)+'<div style="margin-top:8px;font-weight:600">还没有历史回顾</div>'+
-      '<div class="tiny muted" style="margin-top:6px;max-width:340px">从今天开始，每天在「今日」页记录三件事和复盘，跨天后会自动归档到这里，随时回来翻看。</div></div>';
+      '<div class="tiny muted" style="margin-top:6px;max-width:340px">在「今天」页每天记录三件事和复盘，随时可回来翻看或补记任何一天。</div></div>';
   }
   var html = '';
   days.forEach(function(day){
+    var d = day.d;
     html += '<div class="card wide" style="margin-bottom:12px">'+
-      '<div class="tiny" style="font-weight:700;color:var(--muted);margin-bottom:8px">'+md(day.date)+'</div>';
-    if(day.mit){
-      var done = day.mit.items.filter(function(x){ return x.done; }).length;
-      var filled = day.mit.items.filter(function(x){ return x.text; }).length;
+      '<div class="tiny" style="font-weight:700;color:var(--muted);margin-bottom:8px">'+md(day.date)+(d.done?' <span class="chip gr" style="margin-left:4px">已回顾</span>':'')+'</div>';
+    if(d.mit && d.mit.some(function(x){ return x.text; })){
+      var done = d.mit.filter(function(x){ return x.done; }).length;
+      var filled = d.mit.filter(function(x){ return x.text; }).length;
       html += '<div class="tiny" style="margin-bottom:4px">今日三件事 · 完成 <b>'+done+'/'+filled+'</b></div>';
-      day.mit.items.forEach(function(it){
+      d.mit.forEach(function(it){
         if(!it.text) return;
         html += '<div style="display:flex;gap:8px;align-items:flex-start;padding:3px 0;font-size:13px">'+
           '<span style="flex:0 0 auto;width:16px;height:16px;border-radius:5px;display:inline-grid;place-items:center;margin-top:1px;'+(it.done?'background:var(--gr);color:#fff':'border:1.5px solid var(--line2);color:transparent')+'">'+ic('check',10)+'</span>'+
           '<span'+(it.done?' style="color:var(--ink2);text-decoration:line-through"':'')+'>'+esc(it.text)+'</span></div>';
       });
     }
-    if(day.daily){
+    if(d.goods || d.tomorrow){
       html += '<div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--line2)">';
-      if(day.daily.goods){
+      if(d.goods){
         html += '<div class="tiny" style="margin-bottom:2px;color:var(--muted)">三件好事</div>'+
-          '<div style="font-size:13px;line-height:1.6;white-space:pre-wrap">'+esc(day.daily.goods)+'</div>';
+          '<div style="font-size:13px;line-height:1.6;white-space:pre-wrap">'+esc(d.goods)+'</div>';
       }
-      if(day.daily.tomorrow){
+      if(d.tomorrow){
         html += '<div class="tiny" style="margin:8px 0 2px;color:var(--muted)">明天改进一件事</div>'+
-          '<div style="font-size:13px;line-height:1.6">'+esc(day.daily.tomorrow)+'</div>';
+          '<div style="font-size:13px;line-height:1.6">'+esc(d.tomorrow)+'</div>';
       }
       html += '</div>';
     }
@@ -2807,7 +2872,7 @@ function renderMe(){
     '<div class="card wide" id="sync-card">'+renderSyncCardInner()+'</div></div>';
 
   html += '<div class="card wide"><div class="melist">'+
-    mi('clock','#eef2ff','#3b82f6','每日回顾','回看过去每天的三件事完成情况与复盘，跨天自动归档。','<button class="btn sm" data-act="open-review">查看</button>')+
+    mi('clock','#eef2ff','#3b82f6','每日回顾','在「今天」页随时记录三件事与复盘，可补记任意一天，连续回顾会累积。','<button class="btn sm" data-act="go-today-review">去记录</button>')+
     mi('down','var(--pp-soft)','var(--pp)','导出 JSON 备份','把全部目标、记录和周报复盘导成一个文件，换设备或清缓存前务必先导。','<button class="btn pri sm" data-act="export">导出</button>')+
     mi('up','var(--gr-soft)','var(--gr)','导入恢复','读取备份文件。<b>会整份覆盖当前数据</b>，导入前会再确认一次。条数不限。','<button class="btn sm" data-act="import">选择文件</button>')+
     mi('refresh','#eef2ff','#3b82f6','旧版本数据迁移','从早期版本或旧 key 里找数据，补齐缺失字段（障碍/对策/补记标记/分钟）后并入当前结构。','<button class="btn sm" data-act="migrate">扫描并迁移</button>')+
@@ -3278,7 +3343,7 @@ function loadIntel(){
 /* ---------------------------- 14. 导入导出 ---------------------------- */
 function exportJSON(){
   var payload = { app:'goal-hub', version:VERSION, exportedAt:new Date().toISOString(),
-    goals:S.goals, records:S.records, nodes:S.nodes, weekly:S.weekly, settings:{ tab:S.settings.tab, mit:S.settings.mit, daily:S.settings.daily, mitLog:S.settings.mitLog, dailyLog:S.settings.dailyLog } };
+    goals:S.goals, records:S.records, nodes:S.nodes, weekly:S.weekly, settings:{ tab:S.settings.tab, days:S.settings.days, mit:S.settings.mit, daily:S.settings.daily, mitLog:S.settings.mitLog, dailyLog:S.settings.dailyLog } };
   var blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' });
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
@@ -3310,6 +3375,7 @@ function handleImport(text){
       if(!S.settings.statusByDate) S.settings.statusByDate = {};
       if(!Array.isArray(S.settings.mitLog)) S.settings.mitLog = [];
       if(!Array.isArray(S.settings.dailyLog)) S.settings.dailyLog = [];
+      if(typeof S.settings.days !== 'object' || !S.settings.days) S.settings.days = {};
       if(!S.settings.mapView || !S.settings.mapView.focus) S.settings.mapView = Object.assign(blank().settings.mapView, S.settings.mapView);
       migrateTasks();
       save(); closeModal(); renderAll();
@@ -4186,13 +4252,38 @@ document.addEventListener('click', function(e){
     case 'close-modal': closeModal(); break;
     case 'confirm-ok': if(modalCtx.onOk) modalCtx.onOk(); else closeModal(); break;
     case 'mit-done': {
-      var mit = mitState(), mi = +t.getAttribute('data-i');
+      var mit = dayState(curReviewDay()), mi = +t.getAttribute('data-i');
       if(mit.items[mi]){ mit.items[mi].done = !mit.items[mi].done; save(); renderToday(); }
       break;
     }
     case 'mit-clear': {
-      var mc = mitState(), mj = +t.getAttribute('data-i');
+      var mc = dayState(curReviewDay()), mj = +t.getAttribute('data-i');
       if(mc.items[mj]){ mc.items[mj].text = ''; mc.items[mj].done = false; save(); renderToday(); }
+      break;
+    }
+    case 'rv-day': {
+      var rk = t.getAttribute('data-d');
+      REVIEW_DAY = (rk === 'today') ? todayStr() : addDays(todayStr(), -1);
+      save(); renderToday();
+      break;
+    }
+    case 'rv-done': {
+      var rdd = dayState(curReviewDay());
+      rdd.done = !rdd.done;
+      save(); renderToday();
+      toast(rdd.done ? '已记录今日回顾 ✓' : '已撤销回顾标记');
+      break;
+    }
+    case 'rv-strip': {
+      REVIEW_DAY = t.getAttribute('data-d');
+      save(); renderToday();
+      break;
+    }
+    case 'go-today-review': {
+      REVIEW_DAY = todayStr();
+      S.settings.tab = 'today'; save();
+      renderAll();
+      setTimeout(function(){ var el = $('#dailyhub'); if(el) el.scrollIntoView({ behavior:'smooth', block:'start' }); }, 80);
       break;
     }
     case 'toggle-goal': {
@@ -4578,15 +4669,26 @@ document.addEventListener('input', function(e){
     return;
   }
   if(act === 'mit-text'){
-    var mm = mitState(), mi = +t.getAttribute('data-i');
+    var mm = dayState(curReviewDay()), mi = +t.getAttribute('data-i');
     if(mm.items[mi]){ mm.items[mi].text = t.value; save(); }
     return;
   }
-  if(act === 'daily-goods'){ dailyState().goods = t.value; save(); return; }
-  if(act === 'daily-tomorrow'){ dailyState().tomorrow = t.value; save(); return; }
+  if(act === 'daily-goods'){ dayState(curReviewDay()).goods = t.value; save(); return; }
+  if(act === 'daily-tomorrow'){ dayState(curReviewDay()).tomorrow = t.value; save(); return; }
 });
 document.addEventListener('change', function(e){
   if(!e.target) return;
+  if(e.target.closest){
+    var t0 = e.target.closest('[data-act]');
+    if(t0){
+      var act0 = t0.getAttribute('data-act');
+      if(act0 === 'rv-date'){
+        var v = t0.value;
+        if(v && /^\d{4}-\d{2}-\d{2}$/.test(v)){ if(diffDays(v, todayStr()) > 0) v = todayStr(); REVIEW_DAY = v; save(); renderToday(); }
+        return;
+      }
+    }
+  }
   if(e.target.id === 'n-dir'){
     var newDir = e.target.value;
     var parSel = $('#n-parent');
