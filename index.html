@@ -824,6 +824,73 @@ textarea.inp{min-height:70px;resize:vertical;line-height:1.55}
 
 /* 桌面大屏：地图用满横向空间 */
 @media (min-width:1024px){ .map-canvas{max-width:900px} }
+
+/* ===== 复盘页 redesign (2026-08) ===== */
+.muted2{color:var(--muted);font-weight:400;font-size:12px}
+.rv-nav{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 16px}
+.rv-nav-mid{font-weight:700;font-size:15px;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:6px}
+.rv-nav-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.rv-month{width:auto;font-size:13px;padding:5px 9px}
+
+/* 本周概览 hero */
+.rv-hero{padding:16px;margin-bottom:6px}
+.rv-hero-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.wh-seg{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border-radius:12px;background:var(--bg2);border:1.5px solid transparent;cursor:pointer;transition:.15s}
+.wh-seg:hover{transform:translateY(-2px)}
+.wh-ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--card);color:var(--muted);font-size:13px;font-weight:800;border:1.5px solid var(--line2);transition:.15s}
+.wh-seg.done .wh-ic{background:var(--gr);border-color:var(--gr);color:#fff}
+.wh-seg.today .wh-ic{border-color:var(--pp);color:var(--pp);box-shadow:0 0 0 3px var(--pp-soft)}
+.wh-seg.today{background:var(--pp-soft)}
+.wh-seg.future{opacity:.5}
+.wh-wd{font-size:11px;color:var(--muted)}
+.rv-hero-foot{display:flex;align-items:center;gap:18px;margin-top:14px;flex-wrap:wrap}
+.rv-stat{display:flex;flex-direction:column;line-height:1}
+.rv-stat-n{font-size:22px;font-weight:800;color:var(--ink)}
+.rv-stat-d{font-size:13px;color:var(--muted);font-weight:600;margin-left:1px}
+.rv-stat-l{font-size:11.5px;color:var(--muted);margin-top:3px}
+.rv-cta{margin-left:auto}
+.rv-hero-cap{margin-top:10px}
+
+/* 每日卡片 */
+.daycards{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:6px}
+@media(min-width:680px){ .daycards{grid-template-columns:1fr 1fr} }
+.daycard{background:var(--card);border:1px solid var(--line2);border-radius:16px;padding:12px 14px;transition:.15s}
+.daycard.today{border-color:var(--pp);box-shadow:0 0 0 3px var(--pp-soft)}
+.daycard.done{background:linear-gradient(180deg,var(--gr-soft),var(--card))}
+.daycard.future{opacity:.66}
+.dc-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.dc-date{display:flex;align-items:center;gap:7px;min-width:0}
+.dc-md{font-weight:800;font-size:15px;color:var(--ink);font-variant-numeric:tabular-nums}
+.dc-wd{font-size:12px;color:var(--muted)}
+.dc-prog{display:flex;align-items:center;gap:5px}
+.pdot{width:9px;height:9px;border-radius:50%;background:var(--line2);transition:.15s}
+.pdot.on{background:var(--gr)}
+.dc-prog-tx{margin-left:3px}
+.dc-future{padding:14px 4px;text-align:center}
+.mitlist{margin:10px 0 4px;display:flex;flex-direction:column;gap:8px}
+.dc-foot{display:flex;align-items:center;gap:10px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line2)}
+.dc-done{flex:1;border:1.5px solid var(--gr);color:var(--gr);background:transparent;border-radius:10px;padding:8px 10px;font-weight:700;font-size:13px;cursor:pointer;transition:.15s}
+.dc-done.on{background:var(--gr);color:#fff}
+.dc-done:hover{filter:brightness(.97)}
+.dc-more-btn{background:none;border:none;color:var(--muted);font-size:12.5px;font-weight:600;cursor:pointer;padding:6px 4px}
+.dc-more-btn:hover{color:var(--ink)}
+.dc-more{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line2);display:flex;flex-direction:column;gap:12px}
+.dc-field-h{display:flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;color:var(--ink2);margin-bottom:5px}
+.dc-field-h .muted2{font-weight:400}
+.mitclear-ph{width:26px;min-width:26px}
+
+/* 热力图 */
+.hm-scroll{overflow-x:auto;padding:4px 2px 8px}
+.hm-grid{display:flex;gap:3px}
+.hm-col{display:flex;flex-direction:column;gap:3px}
+.hm-cell{width:11px;height:11px;border-radius:3px;background:var(--bg2);flex:0 0 auto}
+.hm-cell.empty{background:transparent}
+.hm-cell.l0{background:var(--bg2)}
+.hm-cell.l1{background:var(--pp-soft)}
+.hm-cell.l2{background:#b9a6f5}
+.hm-cell.l3{background:var(--pp)}
+.hm-legend{display:flex;align-items:center;gap:5px;margin-top:8px;padding-top:10px;border-top:1px solid var(--line2)}
+.hm-legend .hm-cell{width:11px;height:11px}
 </style>
 </head>
 <body>
@@ -2423,144 +2490,169 @@ function reviewStreak(){
 }
 
 /* —— 统一复盘页：周包含日（一周 7 天的回顾汇总 + 每周反思） —— */
-var RC_TAB = 'week'; /* 'week' | 'daily-edit' */
-var RC_EDIT_DAY = null; /* daily-edit 模式下正在编辑哪天 */
+var RC_OPEN = {}; /* 日卡片「更多」展开状态：date -> true/false */
 var RC_WEEK = null; /* 当前查看的周（YYYY-MM-DD，周一） */
 function openReviewCenter(){ closeModal(); setTab('review', true); }
 function reviewCurrentWeek(){ return RC_WEEK || weekStartOf(todayStr()); }
 function renderReviewPage(){
   var pane = $('#pane-review');
   if(!pane) return;
-  var todayDone = dayState(todayStr()).done;
+  var T = todayStr();
+  var todayDone = dayState(T).done;
+  var cw = reviewCurrentWeek();
+  var isThis = cw === weekStartOf(T);
+  var wa = weekAgg(cw);
+
   var html = '<div class="pagehead"><div class="ph-back">'+
     '<button class="btn ghost" data-act="tab" data-k="today" style="padding:4px 8px">'+ic('left',18)+'</button>'+
-    '<h1>记录 · 复盘</h1><div class="sub">'+(todayDone?'今天已回顾 ✓':'今天还没回顾')+' · 周包含日，点击展开每日详情</div></div></div>';
+    '<h1>记录 · 复盘</h1>'+
+    '<div class="sub">'+(todayDone?'今天已回顾 '+ic('leaf',13):'今天还没回顾')+(reviewStreak()>0?' · 连续 <b>'+reviewStreak()+'</b> 天 '+ic('fire',13):'')+'</div></div></div>';
 
-  /* 周导航 + 月份跳转 */
-  var cw = reviewCurrentWeek();
-  var wa = weekAgg(cw), isThis = cw === weekStartOf(todayStr());
-  html += '<div class="card wide" style="margin-bottom:14px">'+
-    '<div class="weekbar">'+
-      '<button class="btn sm" data-act="rc-week-prev">'+ic('left',15)+'上一周</button>'+
-      '<div class="wt">'+md(wa.ws)+' — '+md(wa.we)+(isThis?' <span class="chip pp">本周</span>':'')+'</div>'+
+  html += renderWeekHero(cw, T, isThis, todayDone);
+
+  html += '<div class="rv-nav">'+
+    '<button class="btn sm" data-act="rc-week-prev">'+ic('left',15)+'上一周</button>'+
+    '<div class="rv-nav-mid"><b>'+md(wa.ws)+' — '+md(wa.we)+'</b>'+(isThis?' <span class="chip pp">本周</span>':'')+'</div>'+
+    '<div class="rv-nav-right">'+
       '<button class="btn sm" data-act="rc-week-next"'+(isThis?' disabled style="opacity:.4"':'')+'>下一周'+ic('right',15)+'</button>'+
-    '</div>'+
-    '<div style="display:flex;align-items:center;gap:8px;margin-top:8px">'+
-      '<input type="month" class="inp rc-month-picker" data-act="rc-month-jump" value="'+cw.slice(0,7)+'" style="width:auto;font-size:13px;padding:5px 9px">'+
-      '<span class="tiny muted">跳转到指定月份的周一</span>'+
+      '<input type="month" class="inp rv-month" data-act="rc-month-jump" value="'+cw.slice(0,7)+'" title="跳到任意月份">'+
     '</div>'+
   '</div>';
 
-  /* 该周的 7 天（日包含于周） */
-  html += renderWeekDaysContainer(cw);
+  html += '<div class="sec-title">'+ic('week',15)+'本周每天<span class="muted2"> · 点开记三件事、打卡、写复盘</span><span class="line"></span></div>';
+  html += '<div class="daycards">';
+  for(var i=0;i<7;i++){ html += dayCardHTML(addDays(cw,i), T); }
+  html += '</div>';
 
-  /* 该周的反思四栏 */
+  html += '<div class="sec-title">'+ic('note',15)+'本周复盘<span class="muted2"> · 保持 / 问题 / 尝试 / 预案</span><span class="line"></span></div>';
   html += renderWeeklyReflect(cw);
 
-  /* 快捷：写今天的回顾 */
-  if(!todayDone){
-    html += '<div style="margin-top:14px"><button class="btn pri wfull" data-act="rc-write-today">'+ic('edit',15)+'写今日回顾</button></div>';
-  }
+  html += '<div class="sec-title">'+ic('fire',15)+'我的坚持<span class="muted2"> · 每一天的小记录，连成成长的轨迹</span><span class="line"></span></div>';
+  html += renderHeatmap();
 
-  /* 完整历史（全量，不限制天数） */
-  html += '<div style="margin-top:20px">'+
-    '<div class="sec-title">'+ic('clock',15)+'完整历史回顾 <span class="line"></span></div>'+
-    '<div id="rc-history">'+renderReviewHistory()+'</div>'+
-  '</div>';
+  html += '<div class="sec-title">'+ic('clock',15)+'历史回顾<span class="line"></span></div>';
+  html += '<div id="rc-history">'+renderReviewHistory()+'</div>';
 
   pane.innerHTML = html;
 }
-/* 一周 7 天的容器：每天一行摘要，点击展开完整回顾 */
-function renderWeekDaysContainer(cw){
-  var D = S.settings.days || {}, T = todayStr();
-  var html = '<div class="card wide" style="margin-bottom:14px"><div class="tiny muted" style="margin-bottom:10px;font-weight:600">本周每日回顾（点击展开详情 / 补记）</div>';
+
+function renderWeekHero(cw, T, isThis, todayDone){
+  var D = S.settings.days || {};
+  var doneCnt = 0, seg = '';
   for(var i=0;i<7;i++){
     var dt = addDays(cw,i), d = D[dt];
-    var has = !!(d && (d.done || (d.mit&&d.mit.some(function(x){return x.text&&x.text.trim()})) || (d.goods&&d.goods.trim()) || (d.tomorrow&&d.tomorrow.trim())));
-    var done = !!(d && d.done);
-    var mitDone = d && d.mit ? d.mit.filter(function(x){return x.done&&x.text.trim();}).length : 0;
-    var mitFill = d && d.mit ? d.mit.filter(function(x){return x.text.trim();}).length : 0;
-    var isFuture = diffDays(dt,T) > 0;
-    var isToday = dt === T;
+    var done = !!(d && d.done), isFuture = diffDays(dt,T) > 0, isToday = dt === T;
+    if(done) doneCnt++;
+    var cls = 'wh-seg'+(done?' done':'')+(isToday?' today':'')+(isFuture?' future':'');
+    var inner = done ? ic('check',13) : (isToday ? '今' : wdOf(dt));
+    seg += '<button class="'+cls+'" data-act="rc-jump-day" data-d="'+dt+'" title="'+md(dt)+' 周'+wdOf(dt)+(done?'（已回顾）':'')+'">'+
+      '<span class="wh-ic">'+inner+'</span><span class="wh-wd">周'+wdOf(dt)+'</span></button>';
+  }
+  var streak = reviewStreak();
+  var ctaLabel = todayDone ? (ic('leaf',15)+'今天已完成，可补充') : (ic('check',15)+'记今天的复盘');
+  return '<div class="card wide rv-hero">'+
+    '<div class="rv-hero-strip">'+seg+'</div>'+
+    '<div class="rv-hero-foot">'+
+      '<div class="rv-stat"><span class="rv-stat-n">'+doneCnt+'<span class="rv-stat-d">/7</span></span><span class="rv-stat-l">本周已回顾</span></div>'+
+      '<div class="rv-stat"><span class="rv-stat-n">'+streak+'<span class="rv-stat-d">天</span></span><span class="rv-stat-l">连续复盘 '+ic('fire',12)+'</span></div>'+
+      '<button class="btn pri rv-cta" data-act="rc-goto-today">'+ctaLabel+'</button>'+
+    '</div>'+
+    '<div class="rv-hero-cap tiny muted">每天记三件事 + 一句复盘，七天连成一周的成长 🌱</div>'+
+  '</div>';
+}
 
-    html += '<div class="rwd-row'+(done?' done':'')+(isToday?' today':'')+'" data-rwd-date="'+dt+'">'+
-      '<div class="rwd-left" data-act="rwd-toggle" data-d="'+dt+'">'+
-        '<span class="rwd-dot">'+(done?ic('check',10):'')+'</span>'+
-        '<span class="rwd-date">'+md(dt).slice(5)+'</span>'+
-        '<span class="rwd-wd">周'+wdOf(dt)+'</span>'+
-        (isToday?'<span class="chip pp" style="margin-left:4px;font-size:10px;padding:1px 5px">今天</span>':'')+
-      '</div>'+
-      '<div class="rwd-stat">'+
-        (done?'<span class="chip gr" style="font-size:10px">已回顾</span>':
-         has?'<span class="chip" style="font-size:10px;background:var(--bg2)">有内容</span>':
-         isFuture?'<span class="tiny muted" style="font-size:11px">未来</span>':
-         '<span class="tiny muted" style="font-size:11px">未填写</span>')+
-        (mitFill > 0 ? ' <span class="tiny muted">三件事 '+mitDone+'/'+mitFill+'</span>' : '')+
-      '</div>'+
-      '<div class="rwd-actions">'+
-        (!isFuture ? '<button class="btn sm ghost" data-act="rwd-edit" data-d="'+dt+'">'+ic('edit',12)+(done||has?'编辑':'补记')+'</button>' : '')+
-        '<button class="btn sm ghost" data-act="rwd-toggle" data-d="'+dt+'">'+ic('down',12)+'展开</button>'+
-      '</div>'+
-      '</div>';
-    /* 展开区 */
-    html += '<div class="rwd-detail" id="rwd-'+dt+'" style="display:none">'+renderDayDetail(dt)+'</div>';
-  }
-  html += '</div>';
-  return html;
-}
-/* 单日完整回顾详情（只读展示 + 可触发编辑） */
-function renderDayDetail(dt){
-  var d = dayState(dt), T = todayStr(), isPast = diffDays(dt,T) < 0;
-  if(!d && !isPast){
-    return '<div class="tiny muted" style="padding:12px 0;text-align:center">这一天还没有回顾记录</div>';
-  }
-  var mitDone = d.mit.filter(function(x){return x.done&&x.text.trim();}).length;
-  var mitFill = d.mit.filter(function(x){return x.text.trim();}).length;
-  var html = '';
-  if(mitFill > 0){
-    html += '<div style="margin-bottom:8px"><div class="tiny" style="font-weight:600;color:var(--muted);margin-bottom:4px">三件事 · 完成 <b>'+mitDone+'/'+mitFill+'</b></div>';
-    d.mit.forEach(function(it){
-      if(!it.text) return;
-      html += '<div style="display:flex;gap:8px;align-items:flex-start;padding:2px 0;font-size:13px">'+
-        '<span style="flex:0 0 auto;width:15px;height:15px;border-radius:4px;display:inline-grid;place-items:center;margin-top:2px;'+(it.done?'background:var(--gr);color:#fff':'border:1.5px solid var(--line2);color:transparent')+'">'+ic('check',9)+'</span>'+
-        '<span'+(it.done?' style="color:var(--ink2);text-decoration:line-through"':'')+'>'+esc(it.text)+'</span></div>';
-    });
-    html += '</div>';
+function dayCardHTML(dt, T){
+  var d = dayState(dt);
+  var isToday = dt === T, isFuture = diffDays(dt,T) > 0, done = d.done;
+  var mitDone = d.mit.filter(function(x){ return x.done && x.text.trim(); }).length;
+  var mitFill = d.mit.filter(function(x){ return x.text.trim(); }).length;
+
+  var status;
+  if(isFuture) status = '<span class="chip" style="font-size:10px;background:var(--bg2)">未来</span>';
+  else if(done) status = '<span class="chip gr" style="font-size:10px">已回顾 ✓</span>';
+  else if(mitFill>0 || (d.goods&&d.goods.trim()) || (d.tomorrow&&d.tomorrow.trim())) status = '<span class="chip" style="font-size:10px;background:var(--bg2)">有内容</span>';
+  else status = '<span class="chip" style="font-size:10px;background:var(--bg2)">未填写</span>';
+
+  var pdots = '';
+  for(var k=0;k<3;k++){ pdots += '<span class="pdot'+(k<mitDone?' on':'')+'"></span>'; }
+
+  var body, foot='', more='';
+  if(isFuture){
+    body = '<div class="dc-future tiny muted">'+ic('sun',14)+' 这是未来的日子，到时候再来记～</div>';
   } else {
-    html += '<div class="tiny muted" style="margin-bottom:8px">没有记录三件事</div>';
+    var open = RC_OPEN[dt] !== undefined ? RC_OPEN[dt] : isToday;
+    var rows = d.mit.map(function(it, idx){
+      return '<div class="mit-row'+(it.done?' done':'')+'">'+
+        '<button class="mitchk'+(it.done?' on':'')+'" data-act="mit-done" data-d="'+dt+'" data-i="'+idx+'" aria-label="标记完成">'+ic('check',12)+'</button>'+
+        '<input class="inp mit-inp" type="text" placeholder="第 '+(idx+1)+' 件最重要的事…" value="'+esc(it.text)+'" data-act="mit-text" data-d="'+dt+'" data-i="'+idx+'" maxlength="60">'+
+        (it.text.trim() ? '<button class="mitclear" data-act="mit-clear" data-d="'+dt+'" data-i="'+idx+'" aria-label="清空">'+ic('x',12)+'</button>' : '<span class="mitclear-ph"></span>')+
+      '</div>';
+    }).join('');
+    body = '<div class="mitlist">'+rows+'</div>';
+    var doneBtn = '<button class="dc-done'+(done?' on':'')+'" data-act="rc-done" data-d="'+dt+'">'+(done?ic('check',13)+'已回顾，点此撤销':ic('check',13)+'完成今日回顾')+'</button>';
+    more = '<div class="dc-more" style="display:'+(open?'block':'none')+'">'+
+      '<div class="dc-field"><div class="dc-field-h">'+ic('star',13)+'今天值得记住的 3 件好事<span class="muted2">（哪怕很小）</span></div>'+
+        '<textarea class="inp daily-ta" rows="2" placeholder="例如：没赖床、读完最难那篇、和朋友聊得开心…" data-act="daily-goods" data-d="'+dt+'">'+esc(d.goods)+'</textarea>'+
+      '</div>'+
+      '<div class="dc-field"><div class="dc-field-h">'+ic('bolt',13)+'明天最想改进 / 专注的一件事</div>'+
+        '<textarea class="inp daily-ta" rows="2" placeholder="只写一件，明天就盯着它。" data-act="daily-tomorrow" data-d="'+dt+'">'+esc(d.tomorrow)+'</textarea>'+
+      '</div>'+
+    '</div>';
+    foot = '<div class="dc-foot">'+doneBtn+'<button class="dc-more-btn" data-act="rwd-toggle" data-d="'+dt+'">'+(open?'收起 ✎':'更多 ✎')+'</button></div>';
   }
-  if(d.goods || d.tomorrow){
-    html += '<div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--line2)">';
-    if(d.goods){
-      html += '<div class="tiny" style="font-weight:600;color:var(--muted);margin-bottom:2px">三件好事</div>'+
-        '<div style="font-size:13px;line-height:1.6;white-space:pre-wrap">'+esc(d.goods)+'</div>';
-    }
-    if(d.tomorrow){
-      html += '<div class="tiny" style="font-weight:600;color:var(--muted);margin-top:6px;margin-bottom:2px">明天改进一件事</div>'+
-        '<div style="font-size:13px;line-height:1.6">'+esc(d.tomorrow)+'</div>';
-    }
-    html += '</div>';
-  }
-  if(!d.goods && !d.tomorrow && mitFill===0){
-    html += '<div class="tiny muted" style="padding:8px 0">还没有内容，点上方「补记」添加</div>';
-  }
-  return html;
+
+  return '<div class="daycard'+(done?' done':'')+(isToday?' today':'')+(isFuture?' future':'')+'" id="day-'+dt+'">'+
+    '<div class="dc-head" data-act="rwd-toggle" data-d="'+dt+'" style="cursor:pointer">'+
+      '<div class="dc-date"><span class="dc-md">'+md(dt).slice(5)+'</span><span class="dc-wd">周'+wdOf(dt)+'</span>'+status+'</div>'+
+      '<div class="dc-prog">'+pdots+(!isFuture?'<span class="dc-prog-tx tiny muted">'+mitDone+'/3</span>':'')+'</div>'+
+    '</div>'+
+    body + foot + more +
+  '</div>';
 }
-/* 周反思四栏（接受 cw 参数） */
+
 function renderWeeklyReflect(cw){
   cw = cw || reviewCurrentWeek();
   var notes = S.weekly[cw] || { keep:'', issue:'', try:'', plan:'' };
-  return '<div class="card wide" style="margin-bottom:14px">'+
-    '<div class="tiny muted" style="margin-bottom:10px;font-weight:600">本周反思（保持 / 问题 / 尝试 / 预案）</div>'+
-    '<div class="four">'+
-      fbox('keep','保持','这周哪件事做对了，下周继续',notes.keep,cw)+
-      fbox('issue','问题','哪里卡住了，具体是什么情况',notes.issue,cw)+
-      fbox('try','尝试','下周准备换个什么做法',notes.try,cw)+
-      fbox('plan','下周预案','如果 ______ 出现，我就 ______',notes.plan,cw)+
-    '</div>'+
-    '<div class="rv-foot-row" style="margin-top:10px"><button class="btn ghost sm" data-act="open-week-report">'+ic('week',15)+'查看完整周报（投入量 / 明细 / 报告）›</button></div>'+
-  '</div>';
+  return '<div class="four">'+
+    fbox('keep','保持 ✅','这周哪件事做对了，下周继续',notes.keep,cw)+
+    fbox('issue','问题 🔍','哪里卡住了，具体是什么情况',notes.issue,cw)+
+    fbox('try','尝试 🌱','下周准备换个什么做法',notes.try,cw)+
+    fbox('plan','下周预案 🧭','如果 ______ 出现，我就 ______',notes.plan,cw)+
+  '</div>'+
+  '<div class="rv-foot-row"><button class="btn ghost sm" data-act="open-week-report">'+ic('chart',15)+'查看完整周报（投入量 / 明细 / 报告）›</button></div>';
 }
+
+function renderHeatmap(){
+  var D = S.settings.days || {};
+  var T = todayStr();
+  var start = addDays(weekStartOf(T), -52*7);
+  var weeks = '';
+  for(var w=0; w<53; w++){
+    var col = '<div class="hm-col">';
+    for(var r=0;r<7;r++){
+      var dt = addDays(start, w*7 + r);
+      if(diffDays(dt, T) > 0){ col += '<span class="hm-cell empty"></span>'; }
+      else {
+        var d = D[dt], lvl = 0;
+        if(d){
+          var mdn = d.mit.filter(function(x){return x.done && x.text.trim();}).length;
+          var has = mdn>0 || (d.goods&&d.goods.trim()) || (d.tomorrow&&d.tomorrow.trim());
+          if(d.done && mdn>=3) lvl = 3;
+          else if(d.done) lvl = 2;
+          else if(has) lvl = 1;
+        }
+        col += '<span class="hm-cell l'+lvl+'" title="'+md(dt)+' 周'+wdOf(dt)+(lvl===3?'：已回顾·三件事全完成':lvl===2?'：已回顾':lvl===1?'：有记录':'：未记录')+'"></span>';
+      }
+    }
+    col += '</div>';
+    weeks += col;
+  }
+  return '<div class="card wide"><div class="hm-scroll"><div class="hm-grid">'+weeks+'</div></div>'+
+    '<div class="hm-legend"><span class="tiny muted">少</span>'+
+      '<span class="hm-cell l0"></span><span class="hm-cell l1"></span><span class="hm-cell l2"></span><span class="hm-cell l3"></span>'+
+      '<span class="tiny muted">多 · 颜色越深，这一天复盘越完整</span></div></div>';
+}
+
 /* 每日回顾日志（读 days 映射，返回有记录的日期列表） */
 function reviewLog(){
   var D = S.settings.days || {};
@@ -2603,59 +2695,15 @@ function renderReviewHistory(){
   });
   return html;
 }
-/* 每日回顾编辑模式（独立面板或内嵌）——保留原有表单逻辑 */
-function renderDailyHub(inside){
-  var day = curReviewDay(), T = todayStr();
-  var isToday = day === T, yest = addDays(T,-1);
-  var d = dayState(day), done = d.done;
-  var doneCount = d.mit.filter(function(x){ return x.done && x.text.trim(); }).length;
-  var filled = d.mit.filter(function(x){ return x.text.trim(); }).length;
-  var rows = d.mit.map(function(it,i){
-    return '<div class="mit-row'+(it.done?' done':'')+'">'+
-      '<button class="mitchk'+(it.done?' on':'')+'" data-act="mit-done" data-i="'+i+'" aria-label="标记完成">'+ic('check',12)+'</button>'+
-      '<input class="inp mit-inp" type="text" placeholder="第 '+(i+1)+' 件最重要的事…" value="'+esc(it.text)+'" data-act="mit-text" data-i="'+i+'" maxlength="60">'+
-      '<button class="mitclear" data-act="mit-clear" data-i="'+i+'" aria-label="清空这一项">'+ic('x',12)+'</button>'+
-    '</div>';
-  }).join('');
-  var head =
-    '<div class="rv-head">'+
-      '<div class="rv-title">'+ic('note',16)+'<span>每日回顾</span>'+(done?'<span class="chip gr" style="margin-left:7px">已回顾</span>':'')+'</div>'+
-      '<div class="rv-switch">'+
-        '<button class="rv-day'+(isToday?' on':'')+'" data-act="rv-day" data-d="today">今天</button>'+
-        '<button class="rv-day'+(!isToday && day===yest?' on':'')+'" data-act="rv-day" data-d="yesterday">昨天</button>'+
-        '<input type="date" class="rv-date" data-act="rv-date" value="'+day+'" max="'+T+'">'+
-      '</div>'+
-    '</div>';
-  var backfill = isToday ? '' :
-    '<div class="rv-backfill">'+ic('edit',14)+' 补记模式：你在补记 <b>'+md(day)+'</b> 的回顾，填写不影响今天，可随时回看。</div>';
-  var meta = '<div class="rv-meta">'+md(day)+' 周'+wdOf(day)+(filled?(' · 三件事完成 <b>'+doneCount+'/'+filled+'</b>'):'')+' · 已连续回顾 <b>'+reviewStreak()+'</b> 天</div>';
-  var doneLabel = done ? '已回顾，点此撤销' : (isToday ? '完成今日回顾' : '完成这一天的回顾');
-  var doneBtn = '<button class="btn '+(done?'ghost':'pri')+' wfull" data-act="rv-done">'+ic('check',15)+ doneLabel+'</button>';
-  return '<div class="sec" id="dailyhub"><div class="card dailyhub">'+head+backfill+
-    '<div class="dailyhub-body">'+meta+
-      '<div class="tiny muted" style="margin:12px 0 6px">今日三件事（要事第一，先啃最不想做的那只「青蛙」）</div>'+
-      '<div class="mitlist">'+rows+'</div>'+
-      '<div class="tiny" style="margin:14px 0 6px">今天值得记住的 3 件好事（哪怕很小）</div>'+
-      '<textarea class="inp daily-ta" rows="3" placeholder="例如：早上没赖床、把最难的那篇读完、和朋友聊得开心…" data-act="daily-goods">'+esc(d.goods)+'</textarea>'+
-      '<div class="tiny" style="margin:10px 0 6px">明天最想改进 / 专注的一件事</div>'+
-      '<textarea class="inp daily-ta" rows="2" placeholder="只写一件，明天就盯着它。" data-act="daily-tomorrow">'+esc(d.tomorrow)+'</textarea>'+
-      '<div style="margin-top:12px">'+doneBtn+'</div>'+
-      (inside
-        ? '<div style="margin-top:12px;text-align:right"><button class="btn sm ghost" data-act="rc-back-to-week">← 返回周视图</button></div>'
-        : '<div style="margin-top:12px;text-align:right"><button class="btn sm ghost" data-act="open-review">查看完整历史回顾 ›</button></div>')+
-    '</div>'+
-  '</div></div>';
-}
-/* 复盘页刷新：根据当前模式刷新内容区 */
-function refreshDailyView(){
-  if(RC_TAB === 'daily-edit'){
-    var body = $('#rc-body');
-    if(body) body.innerHTML = renderDailyHub(true);
-  } else {
-    renderReviewPage();
-  }
+/* 复盘页刷新：re-render 并尽量保留滚动位置与展开态 */
+function rerenderReview(keepScroll){
+  var pane = $('#pane-review');
+  var st = (keepScroll && pane) ? pane.scrollTop : 0;
+  renderReviewPage();
+  if(pane) pane.scrollTop = st;
   updateReviewFab();
 }
+function refreshDailyView(){ rerenderReview(true); }
 /* 导航「复盘」未回顾红点 + 左下角「我的」选中态 */
 function updateReviewFab(){
   var dot = $('#navDotReview');
@@ -4449,38 +4497,26 @@ document.addEventListener('click', function(e){
     case 'close-modal': closeModal(); break;
     case 'confirm-ok': if(modalCtx.onOk) modalCtx.onOk(); else closeModal(); break;
     case 'mit-done': {
-      var mit = dayState(curReviewDay()), mi = +t.getAttribute('data-i');
+      var mday = t.getAttribute('data-d') || curReviewDay(), mi = +t.getAttribute('data-i');
+      var mit = dayState(mday);
       if(mit.mit[mi]){ mit.mit[mi].done = !mit.mit[mi].done; save(); refreshDailyView(); }
       break;
     }
     case 'mit-clear': {
-      var mc = dayState(curReviewDay()), mj = +t.getAttribute('data-i');
+      var mcday = t.getAttribute('data-d') || curReviewDay(), mj = +t.getAttribute('data-i');
+      var mc = dayState(mcday);
       if(mc.mit[mj]){ mc.mit[mj].text = ''; mc.mit[mj].done = false; save(); refreshDailyView(); }
       break;
     }
-    case 'rv-day': {
-      var rk = t.getAttribute('data-d');
-      REVIEW_DAY = (rk === 'today') ? todayStr() : addDays(todayStr(), -1);
-      save(); refreshDailyView();
+    case 'rc-done': {
+      var rcd = t.getAttribute('data-d');
+      var rcdd = dayState(rcd);
+      rcdd.done = !rcdd.done;
+      save(); rerenderReview(true);
+      toast(rcdd.done ? '已记录 '+md(rcd)+' 的回顾 ✓' : '已撤销回顾标记');
       break;
     }
-    case 'rv-done': {
-      var rdd = dayState(curReviewDay());
-      rdd.done = !rdd.done;
-      save(); refreshDailyView();
-      toast(rdd.done ? '已记录今日回顾 ✓' : '已撤销回顾标记');
-      break;
-    }
-    case 'rv-strip': {
-      REVIEW_DAY = t.getAttribute('data-d');
-      save(); refreshDailyView();
-      break;
-    }
-    case 'go-today-review': {
-      REVIEW_DAY = todayStr(); RC_TAB = 'daily';
-      openReviewCenter();
-      break;
-    }
+    /* 旧 daily-edit 模式的遗留分支（rv-day/rv-done/rv-strip/go-today-review）已随内联卡片 redesign 移除 */
     case 'toggle-goal': {
       // 手风琴单开：展开一个时收起其他同级，再次点击当前已展开的则收起
       var _exp = S.settings.expanded || {};
@@ -4585,34 +4621,26 @@ document.addEventListener('click', function(e){
       break;
     }
     case 'rwd-toggle': {
-      var rwdDt = t.getAttribute('data-d');
-      var detail = $('#rwd-'+rwdDt);
-      if(detail){ var hidden = detail.style.display==='none' || !detail.style.display; detail.style.display = hidden?'block':'none';
-        /* 切换展开图标 */
-        var row = detail.previousElementSibling;
-        if(row){ var btns = row.querySelectorAll('[data-act="rwd-toggle"]'); btns.forEach(function(b){ b.innerHTML = hidden?ic('up',12)+'收起':ic('down',12)+'展开'; }); }
-      }
+      var rdt = t.getAttribute('data-d');
+      RC_OPEN[rdt] = !RC_OPEN[rdt];
+      save(); rerenderReview(true);
       break;
     }
-    case 'rwd-edit': {
-      var editDt = t.getAttribute('data-d');
-      REVIEW_DAY = editDt; RC_TAB = 'daily-edit';
-      var body = $('#rc-body');
-      if(body) body.innerHTML = renderDailyHub(true);
-      else { renderReviewPage(); }
+    case 'rc-jump-day': {
+      var jdt = t.getAttribute('data-d');
+      RC_OPEN[jdt] = true; save(); renderReviewPage();
+      var jel = document.getElementById('day-'+jdt);
+      if(jel) jel.scrollIntoView({ behavior:'smooth', block:'center' });
       break;
     }
-    case 'rc-write-today': {
-      REVIEW_DAY = todayStr(); RC_TAB = 'daily-edit';
-      var wb = $('#rc-body');
-      if(wb) wb.innerHTML = renderDailyHub(true);
-      else { renderReviewPage(); }
+    case 'rc-goto-today': {
+      var tdt = todayStr();
+      RC_OPEN[tdt] = true; save(); renderReviewPage();
+      var tel = document.getElementById('day-'+tdt);
+      if(tel) tel.scrollIntoView({ behavior:'smooth', block:'center' });
       break;
     }
-    case 'rc-back-to-week': {
-      RC_TAB = 'week'; renderReviewPage();
-      break;
-    }
+    /* 旧 daily-edit 编辑/补记入口已移除，改由内联 daycard 直接编辑 */
     case 'rc-hist-week': {
       var hjWs = t.getAttribute('data-ws');
       if(hjWs){ RC_WEEK = hjWs; save(); renderReviewPage(); /* 滚动到顶部 */ var pane = $('#pane-review'); if(pane) pane.scrollTop = 0; }
@@ -4915,12 +4943,12 @@ document.addEventListener('input', function(e){
     return;
   }
   if(act === 'mit-text'){
-    var mm = dayState(curReviewDay()), mi = +t.getAttribute('data-i');
+    var mdt = t.getAttribute('data-d') || curReviewDay(), mm = dayState(mdt), mi = +t.getAttribute('data-i');
     if(mm.mit[mi]){ mm.mit[mi].text = t.value; save(); }
     return;
   }
-  if(act === 'daily-goods'){ dayState(curReviewDay()).goods = t.value; save(); return; }
-  if(act === 'daily-tomorrow'){ dayState(curReviewDay()).tomorrow = t.value; save(); return; }
+  if(act === 'daily-goods'){ dayState(t.getAttribute('data-d') || curReviewDay()).goods = t.value; save(); return; }
+  if(act === 'daily-tomorrow'){ dayState(t.getAttribute('data-d') || curReviewDay()).tomorrow = t.value; save(); return; }
 });
 document.addEventListener('change', function(e){
   if(!e.target) return;
