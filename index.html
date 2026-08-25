@@ -87,24 +87,39 @@ main{padding:14px 14px calc(88px + env(safe-area-inset-bottom)) 14px;max-width:1
   main{margin-left:236px;padding:26px 30px 60px;max-width:1240px}
 }
 
-/* ============ 左下角「记录·复盘」悬浮入口（参考 WorkBuddy 左下角低存在感设计） ============ */
-.review-fab{
-  position:fixed; z-index:70; left:16px; bottom:calc(74px + env(safe-area-inset-bottom));
-  display:inline-flex; align-items:center; gap:8px;
-  padding:11px 15px 11px 13px; border:0; border-radius:14px;
-  background:linear-gradient(135deg,var(--pp),#7c5cff); color:#fff;
-  font-size:14px; font-weight:700; letter-spacing:.3px;
-  box-shadow:0 10px 24px rgba(124,92,255,.40);
-  cursor:pointer; transition:transform .12s ease, box-shadow .12s ease;
+/* ============ 左下角「我的」账号入口（参考 WorkBuddy 左下角账号区设计） ============ */
+.me-fab{
+  position:fixed; z-index:70; left:14px; bottom:calc(70px + env(safe-area-inset-bottom));
+  display:inline-flex; align-items:center; gap:9px; text-align:left;
+  padding:7px 11px 7px 7px; border:1px solid var(--line); border-radius:15px;
+  background:rgba(255,255,255,.93); backdrop-filter:saturate(1.5) blur(12px);
+  box-shadow:0 8px 22px rgba(40,38,28,.13);
+  cursor:pointer; transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
 }
-.review-fab .rf-ic{display:grid;place-items:center}
-.review-fab .rf-ic svg{width:19px;height:19px}
-.review-fab:hover{ box-shadow:0 14px 30px rgba(124,92,255,.52); }
-.review-fab:active{ transform:scale(.96); }
-.review-fab .rf-dot{ position:absolute; top:5px; right:7px; width:9px; height:9px; border-radius:50%; background:#ff5d5d; border:2px solid #fff; display:none; }
-.review-fab .rf-dot.show{ display:block; }
-@media (min-width:768px){ .review-fab{ left:18px; bottom:18px; } }
-@media (min-width:1024px){ .review-fab{ left:calc(236px + 18px); bottom:20px; } }
+.me-fab .mf-av{ flex:0 0 auto; width:30px; height:30px; border-radius:10px; background:var(--grad); color:#fff; display:grid; place-items:center; box-shadow:0 4px 12px rgba(124,92,255,.30) }
+.me-fab .mf-av svg{ width:16px; height:16px }
+.me-fab .mf-tx{ display:flex; flex-direction:column; gap:1px; line-height:1.25 }
+.me-fab .mf-n{ font-size:13.5px; font-weight:700; color:var(--ink) }
+.me-fab .mf-s{ font-size:10.5px; font-weight:600; color:var(--muted2) }
+.me-fab .mf-ch{ flex:0 0 auto; color:var(--muted2); display:grid; place-items:center }
+.me-fab:hover{ box-shadow:0 12px 26px rgba(40,38,28,.17); border-color:var(--line2) }
+.me-fab:active{ transform:scale(.97) }
+.me-fab.on{ border-color:var(--pp); background:#fff }
+.me-fab.on .mf-n{ color:var(--pp) }
+@media (max-width:520px){ .me-fab .mf-s{ display:none } }
+@media (min-width:768px){ .me-fab{ left:16px; bottom:16px } }
+@media (min-width:1024px){ .me-fab{ left:calc(236px + 18px); bottom:18px } }
+
+/* 导航项：长短标签 + 未回顾小红点 */
+.navbtn{ position:relative }
+.nb-l{ display:none }
+.nb-dot{ display:none; width:8px; height:8px; border-radius:50%; background:#ff5d5d }
+.nb-dot.show{ display:block; position:absolute; top:7px; left:calc(50% + 9px) }
+@media (min-width:768px){
+  .nb-s{ display:none }
+  .nb-l{ display:inline }
+  .nb-dot.show{ position:static; margin-left:1px }
+}
 
 /* 复盘中心：每日 / 周 分段切换 */
 .rc-seg{ display:flex; gap:8px; padding:4px; background:var(--bg2); border-radius:13px; margin-bottom:14px; }
@@ -817,10 +832,10 @@ textarea.inp{min-height:70px;resize:vertical;line-height:1.55}
     </div>
   </nav>
 
-  <button class="review-fab" id="reviewFab" data-act="open-review-center" aria-label="记录与复盘">
-    <span class="rf-ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4 a2 2 0 0 1 2-2 h10 a2 2 0 0 1 2 2 v16 a2 2 0 0 1 -2 2 H7 a2 2 0 0 1 -2 -2 Z"/><path d="M9 6 h6 M9 10 h6 M9 14 h4"/></svg></span>
-    <span class="rf-tx">记录·复盘</span>
-    <span class="rf-dot" id="rfDot"></span>
+  <button class="me-fab" id="meFab" data-act="tab" data-k="me" aria-label="我的">
+    <span class="mf-av"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.8 20a7.2 7.2 0 0 1 14.4 0"/></svg></span>
+    <span class="mf-tx"><span class="mf-n">我的</span><span class="mf-s">备份 · 同步 · 设置</span></span>
+    <span class="mf-ch"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
   </button>
 
   <main>
@@ -829,6 +844,7 @@ textarea.inp{min-height:70px;resize:vertical;line-height:1.55}
     <section class="tabpane" id="pane-map"></section>
     <section class="tabpane" id="pane-board"></section>
     <section class="tabpane" id="pane-week"></section>
+    <section class="tabpane" id="pane-review"></section>
     <section class="tabpane" id="pane-me"></section>
     <section class="tabpane" id="pane-books"></section>
   </main>
@@ -2001,21 +2017,26 @@ function confetti(){
 
 /* ---------------------------- 6. Tab 导航 ---------------------------- */
 var TABS = [
-  { k:'today', n:'今日', i:'home' },
-  { k:'books', n:'书影音', i:'book' },
-  { k:'map',   n:'成长地图', i:'map' },
-  { k:'board', n:'看板', i:'board' },
-  { k:'week',  n:'周报', i:'week' },
-  { k:'me',    n:'我的', i:'me' }
+  { k:'today',  n:'今日', i:'home' },
+  { k:'books',  n:'书影音', i:'book' },
+  { k:'map',    n:'成长地图', i:'map' },
+  { k:'board',  n:'看板', i:'board' },
+  { k:'week',   n:'周报', i:'week' },
+  { k:'review', n:'复盘', n2:'记录 · 复盘', i:'note' }
 ];
+/* 「我的」不在导航里（走左下角账号入口），但仍是一个独立页面 */
+var PANES = ['today','books','map','board','week','review','me'];
 function renderNav(){
   $('#navlist').innerHTML = TABS.map(function(t){
-    return '<button class="navbtn'+(S.settings.tab===t.k?' on':'')+'" data-act="tab" data-k="'+t.k+'">'+ic(t.i,20)+'<span>'+t.n+'</span></button>';
+    var lab = t.n2 ? ('<span class="nb-s">'+t.n+'</span><span class="nb-l">'+t.n2+'</span>') : '<span>'+t.n+'</span>';
+    var dot = (t.k === 'review') ? '<span class="nb-dot" id="navDotReview"></span>' : '';
+    return '<button class="navbtn'+(S.settings.tab===t.k?' on':'')+'" data-act="tab" data-k="'+t.k+'">'+ic(t.i,20)+lab+dot+'</button>';
   }).join('');
-  TABS.forEach(function(t){
-    var p = $('#pane-'+t.k);
-    if(p) p.classList.toggle('on', S.settings.tab === t.k);
+  PANES.forEach(function(k){
+    var p = $('#pane-'+k);
+    if(p) p.classList.toggle('on', S.settings.tab === k);
   });
+  updateReviewFab();
 }
 function setTab(k, noScroll){
   S.settings.tab = k; save(); renderAll();
@@ -2499,18 +2520,22 @@ function openReview(){
   openSheet('每日回顾', renderReview(), '<button class="btn" data-act="close-modal">关闭</button>', {});
 }
 
-/* —— 统一复盘中心：每日回顾 + 周复盘，一个入口 —— */
+/* —— 统一复盘页：每日回顾 + 周复盘，一个导航入口 —— */
 var RC_TAB = 'daily';
-function openReviewCenter(){
-  RC_TAB = 'daily';
-  openSheet('记录 · 复盘', reviewCenterBody(), '<button class="btn" data-act="close-modal">关闭</button>', {});
-}
-function reviewCenterBody(){
-  return '<div class="rc-seg">'+
-    '<button class="rc-tab on" data-act="rc-tab" data-v="daily">'+ic('note',16)+'<span>每日回顾</span></button>'+
-    '<button class="rc-tab" data-act="rc-tab" data-v="week">'+ic('week',16)+'<span>周复盘</span></button>'+
-  '</div>'+
-  '<div id="rc-body">'+renderDailyHub(true)+'</div>';
+function openReviewCenter(){ closeModal(); setTab('review', true); }
+function renderReviewPage(){
+  var pane = $('#pane-review');
+  if(!pane) return;
+  var todayDone = dayState(todayStr()).done;
+  var html = '<div class="pagehead"><div class="ph-back">'+
+    '<button class="btn ghost" data-act="tab" data-k="today" style="padding:4px 8px">'+ic('left',18)+'</button>'+
+    '<h1>记录 · 复盘</h1><div class="sub">'+(todayDone?'今天已回顾 ✓':'今天还没回顾')+' · 每日回顾可补记任意一天，周复盘按周一到周日结算</div></div></div>';
+  html += '<div class="rc-seg">'+
+    '<button class="rc-tab'+(RC_TAB==='daily'?' on':'')+'" data-act="rc-tab" data-v="daily">'+ic('note',16)+'<span>每日回顾</span></button>'+
+    '<button class="rc-tab'+(RC_TAB==='week'?' on':'')+'" data-act="rc-tab" data-v="week">'+ic('week',16)+'<span>周复盘</span></button>'+
+  '</div>';
+  html += '<div id="rc-body">'+(RC_TAB==='daily' ? renderDailyHub(true) : renderWeeklyReflect())+'</div>';
+  pane.innerHTML = html;
 }
 function renderWeeklyReflect(){
   var cw = S.settings.week || weekStartOf(todayStr());
@@ -2533,16 +2558,19 @@ function renderWeeklyReflect(){
   html += '<div class="rv-foot-row"><button class="btn ghost sm" data-act="open-week-report">'+ic('week',15)+'查看完整周报（投入量 / 明细 / 报告）›</button></div>';
   return html;
 }
-/* 复盘中心内的交互后，只刷新中心内容（若中心已打开），并同步左下角红点 */
+/* 复盘页内的交互后，只刷新内容区，并同步导航小红点 */
 function refreshDailyView(){
   var body = $('#rc-body');
   if(body){ body.innerHTML = (RC_TAB==='daily' ? renderDailyHub(true) : renderWeeklyReflect()); }
+  else { renderReviewPage(); }
   updateReviewFab();
 }
+/* 导航「复盘」未回顾红点 + 左下角「我的」选中态 */
 function updateReviewFab(){
-  var fab = $('#reviewFab'), dot = $('#rfDot');
-  if(!fab || !dot) return;
-  dot.classList.toggle('show', !dayState(todayStr()).done);
+  var dot = $('#navDotReview');
+  if(dot) dot.classList.toggle('show', !dayState(todayStr()).done);
+  var mf = $('#meFab');
+  if(mf) mf.classList.toggle('on', S.settings.tab === 'me');
 }
 
 /* ---------------------------- 9. 看板 ---------------------------- */
@@ -2845,7 +2873,10 @@ function renderWeek(){
       : '<div class="empty"><div class="ei">'+ic('week',24)+'</div><b>这一周没有记录</b><p>换一周看看，或者回「今日」补记进度（日期可自由选择）。</p></div>')+
   '</div>';
 
-  html += '<div class="card wide" style="margin:6px 0 14px"><div class="tiny muted" style="line-height:1.7">'+ic('note',14,' style="display:inline;vertical-align:-2px;margin-right:5px"')+' 每周的「保持 / 问题 / 尝试 / 预案」复盘，已整合到左下角 <b>记录·复盘</b> › <b>周复盘</b>。这里只放投入量数据与一键周报。</div></div>';
+  html += '<div class="card wide" style="margin:6px 0 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+
+    '<div class="tiny muted" style="line-height:1.7;flex:1;min-width:200px">'+ic('note',14,' style="display:inline;vertical-align:-2px;margin-right:5px"')+' 每周的「保持 / 问题 / 尝试 / 预案」复盘，已整合到 <b>记录 · 复盘</b> › <b>周复盘</b>。这里只放投入量数据与一键周报。</div>'+
+    '<button class="btn sm" data-act="tab" data-k="review">'+ic('note',15)+'去写周复盘</button>'+
+  '</div>';
 
   var weekRecs = S.records.filter(function(r){ return diffDays(a.ws, r.date) >= 0 && diffDays(r.date, a.we) >= 0; })
     .sort(function(x,y){ return x.date < y.date ? 1 : (x.date > y.date ? -1 : 0); });
@@ -2946,7 +2977,7 @@ function renderMe(){
     '<div class="card wide" id="sync-card">'+renderSyncCardInner()+'</div></div>';
 
   html += '<div class="card wide"><div class="melist">'+
-    mi('clock','#eef2ff','#3b82f6','记录 · 复盘','每日三件事 + 复盘，以及每周的「保持 / 问题 / 尝试 / 预案」，统一在左下角「记录·复盘」里记录与回溯。','<button class="btn sm" data-act="open-review-center">去记录</button>')+
+    mi('clock','#eef2ff','#3b82f6','记录 · 复盘','每日三件事 + 复盘，以及每周的「保持 / 问题 / 尝试 / 预案」，统一在导航的「记录 · 复盘」页里记录与回溯。','<button class="btn sm" data-act="tab" data-k="review">去记录</button>')+
     mi('down','var(--pp-soft)','var(--pp)','导出 JSON 备份','把全部目标、记录和周报复盘导成一个文件，换设备或清缓存前务必先导。','<button class="btn pri sm" data-act="export">导出</button>')+
     mi('up','var(--gr-soft)','var(--gr)','导入恢复','读取备份文件。<b>会整份覆盖当前数据</b>，导入前会再确认一次。条数不限。','<button class="btn sm" data-act="import">选择文件</button>')+
     mi('refresh','#eef2ff','#3b82f6','旧版本数据迁移','从早期版本或旧 key 里找数据，补齐缺失字段（障碍/对策/补记标记/分钟）后并入当前结构。','<button class="btn sm" data-act="migrate">扫描并迁移</button>')+
@@ -4305,7 +4336,7 @@ function todayRhythm(){
 /* ---------------------------- 15. 渲染总入口 ---------------------------- */
 function renderAll(){
   renderNav(); renderBanner();
-  renderToday(); renderMap(); renderBoard(); renderWeek(); renderMe(); renderBooks();
+  renderToday(); renderMap(); renderBoard(); renderWeek(); renderReviewPage(); renderMe(); renderBooks();
   updateReviewFab();
 }
 
@@ -4355,6 +4386,7 @@ document.addEventListener('click', function(e){
       break;
     }
     case 'go-today-review': {
+      REVIEW_DAY = todayStr(); RC_TAB = 'daily';
       openReviewCenter();
       break;
     }
