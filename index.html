@@ -3546,12 +3546,18 @@ function fruitPunch(c){
   var monthKey = T.slice(0,7);
   var monthCount = recsOf(g.id).filter(function(r){ return String(r.date||'').slice(0,7)===monthKey; }).length;
   var d = (S.settings.punch && S.settings.punch[g.id]) || {};
+  var date = d.date || T;
+  var isBack = date !== T;
+  var btnLabel = isBack ? ('补记到 '+date.slice(5)+' · +1 次') : '吃水果了 · +1 次';
   return '<div class="punch">'+
     '<div class="suggest-tip">'+ic('leaf',15)+'<span><b>'+MONTHS_CN_FRUIT[month-1]+'</b>应季水果 · 本月已吃 <b>'+monthCount+'</b> 次</span></div>'+
     '<div class="fruit-season">'+fruitSeasonHTML(month)+'</div>'+
     '<div style="margin-top:10px"><div class="lbl">今天吃了什么（选填，记一句）</div>'+
       '<input class="inp" type="text" maxlength="80" data-act="punch-input" data-f="content" data-id="'+g.id+'" placeholder="如：蓝莓一小盒 + 一个苹果" value="'+esc(d.content||'')+'"></div>'+
-    '<button class="btn ok wfull" style="margin-top:10px" data-act="punch" data-id="'+g.id+'">'+ic('check',16)+'吃水果了 · +1 次</button>'+
+    '<div class="prow2" style="margin-top:10px">'+
+      '<div><div class="lbl">记到哪天</div><input class="inp" type="date" max="'+T+'" data-act="punch-input" data-f="date" data-id="'+g.id+'" value="'+esc(date)+'"></div>'+
+      '<div style="display:flex;align-items:flex-end"><button class="btn ok wfull" data-act="punch" data-id="'+g.id+'">'+ic('check',16)+esc(btnLabel)+'</button></div>'+
+    '</div>'+
   '</div>';
 }
 
@@ -5007,6 +5013,7 @@ document.addEventListener('change', function(e){
     S.settings.punch[gid] = S.settings.punch[gid] || {};
     S.settings.punch[gid][f] = t.value;
     save();
+    if(f === 'date') renderAll();   /* 选了补卡日期 → 按钮文案实时切换为「补记到 X」 */
     return;
   }
   if(ia === 'intel-backdate'){ if(modalCtx.intel){ modalCtx.intel.backDate = t.value; } return; }
