@@ -624,7 +624,9 @@ textarea.inp{min-height:70px;resize:vertical;line-height:1.55}
 .mitchk{width:26px;height:26px;min-width:26px;border-radius:8px;border:2px solid var(--line2);display:grid;place-items:center;color:transparent;background:var(--card);transition:.15s;cursor:pointer}
 .mitchk.on{background:var(--pp);border-color:var(--pp);color:#fff}
 .mit-inp{flex:1}
-.mit-row.done .mit-inp{text-decoration:line-through;color:var(--muted)}
+.mit-row.done{opacity:.55;transition:opacity .15s}
+.mit-row.done .mit-inp{text-decoration:line-through;text-decoration-thickness:2px;color:var(--muted)}
+.mit-row.done .mitchk{background:var(--pp);border-color:var(--pp);color:#fff}
 .mitclear{width:26px;height:26px;min-width:26px;border-radius:8px;display:grid;place-items:center;color:var(--muted);opacity:.45;transition:.15s;cursor:pointer}
 .mitclear:hover{opacity:1}
 .daily-ta{width:100%;min-height:64px;resize:vertical;font-size:14px}
@@ -901,7 +903,10 @@ textarea.inp{min-height:70px;resize:vertical;line-height:1.55}
 .cal-note-list{display:flex;flex-direction:column;gap:6px}
 .cal-note-item{display:flex;align-items:center;gap:8px;background:var(--bg2);border-radius:9px;padding:6px 8px}
 .cal-note-item .cal-note-tx{flex:1;font-size:13px;color:var(--ink);word-break:break-all}
-.cal-note-item.done .cal-note-tx{text-decoration:line-through;color:var(--muted)}
+.cal-note-item.done{opacity:.55;transition:opacity .15s}
+.cal-note-item.done .cal-note-tx{text-decoration:line-through;text-decoration-thickness:2px;color:var(--muted)}
+.cal-note.done{text-decoration:line-through;text-decoration-thickness:2px;color:var(--muted2);opacity:.7}
+.cal-cell .cal-note.done::before{content:"✓ ";color:var(--pp)}
 .cal-note-add{display:flex;gap:6px;margin-top:10px}
 .cal-note-add .inp{flex:1}
 </style>
@@ -2955,7 +2960,7 @@ function renderCalendar(){
     if(notes.length){
       var first = notes[0].text || '';
       var label = first.length > 9 ? first.slice(0,9)+'…' : first;
-      noteHTML = '<span class="cal-note" title="'+esc(notes.map(function(n){ return (n.done?'✓ ':'• ')+n.text; }).join('\n'))+'">'+
+      noteHTML = '<span class="cal-note'+(notes[0].done?' done':'')+'" title="'+esc(notes.map(function(n){ return (n.done?'✓ ':'• ')+n.text; }).join('\n'))+'">'+
         esc(label)+(notes.length>1 ? (' +'+(notes.length-1)) : '')+'</span>';
     }
     var isToday = date === todayStr();
