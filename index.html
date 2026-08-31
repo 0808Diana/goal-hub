@@ -884,12 +884,12 @@ textarea.inp{min-height:70px;resize:vertical;line-height:1.55}
 .hm-scroll{overflow-x:auto;padding:4px 2px 8px}
 .hm-grid{display:flex;gap:3px}
 .hm-col{display:flex;flex-direction:column;gap:3px}
-.hm-cell{width:11px;height:11px;border-radius:3px;background:var(--bg2);flex:0 0 auto}
+.hm-cell{width:11px;height:11px;border-radius:2px;background:#ebedf0;flex:0 0 auto;transition:background .15s}
 .hm-cell.empty{background:transparent}
-.hm-cell.l0{background:var(--bg2)}
-.hm-cell.l1{background:var(--pp-soft)}
-.hm-cell.l2{background:#b9a6f5}
-.hm-cell.l3{background:var(--pp)}
+.hm-cell.l0{background:#ebedf0}
+.hm-cell.l1{background:#9be9a8}
+.hm-cell.l2{background:#40c463}
+.hm-cell.l3{background:#1a7f37}
 .hm-legend{display:flex;align-items:center;gap:5px;margin-top:8px;padding-top:10px;border-top:1px solid var(--line2)}
 .hm-legend .hm-cell{width:11px;height:11px}
 </style>
@@ -2643,8 +2643,18 @@ function renderWeeklyReflect(cw){
 }
 
 function renderHeatmap(){
-  var D = S.settings.days || {};
   var T = todayStr();
+  /* 预计算：每天的总打卡次数（所有目标） */
+  var dayCount = {};
+  (S.records || []).forEach(function(r){
+    if(r.date) dayCount[r.date] = (dayCount[r.date] || 0) + 1;
+  });
+  /* 按次数分布决定色阶阈值（动态：让顶层颜色真正出现） */
+  var counts = Object.values(dayCount).filter(function(c){ return c > 0; });
+  counts.sort(function(a,b){ return b-a; });
+  var t3 = counts[0] >= 4 ? 4 : (counts[0] >= 3 ? 3 : 2);   /* l3 阈值 */
+  var t2 = Math.max(1, Math.ceil(t3 / 2));                     /* l2 阈值 */
+
   var start = addDays(weekStartOf(T), -52*7);
   var weeks = '';
   for(var w=0; w<53; w++){
@@ -2653,15 +2663,12 @@ function renderHeatmap(){
       var dt = addDays(start, w*7 + r);
       if(diffDays(dt, T) < 0){ col += '<span class="hm-cell empty"></span>'; }
       else {
-        var d = D[dt], lvl = 0;
-        if(d){
-          var mdn = d.mit.filter(function(x){return x.done && x.text.trim();}).length;
-          var has = mdn>0 || (d.goods&&d.goods.trim()) || (d.tomorrow&&d.tomorrow.trim());
-          if(d.done && mdn>=3) lvl = 3;
-          else if(d.done) lvl = 2;
-          else if(has) lvl = 1;
-        }
-        col += '<span class="hm-cell l'+lvl+'" title="'+md(dt)+' 周'+wdOf(dt)+(lvl===3?'：已回顾·三件事全完成':lvl===2?'：已回顾':lvl===1?'：有记录':'：未记录')+'"></span>';
+        var n = dayCount[dt] || 0;
+        var lvl = 0;
+        if(n >= t3) lvl = 3;
+        else if(n >= t2) lvl = 2;
+        else if(n >= 1) lvl = 1;
+        col += '<span class="hm-cell l'+lvl+'" title="'+md(dt)+' 周'+wdOf(dt)+' · 打卡 '+n+' 次'+(lvl===3?'（很棒🔥）':lvl===2?'（不错）':lvl===1?'（有记录）':'')+'"></span>';
       }
     }
     col += '</div>';
@@ -2670,7 +2677,7 @@ function renderHeatmap(){
   return '<div class="card wide"><div class="hm-scroll"><div class="hm-grid">'+weeks+'</div></div>'+
     '<div class="hm-legend"><span class="tiny muted">少</span>'+
       '<span class="hm-cell l0"></span><span class="hm-cell l1"></span><span class="hm-cell l2"></span><span class="hm-cell l3"></span>'+
-      '<span class="tiny muted">多 · 颜色越深，这一天复盘越完整</span></div></div>';
+      '<span class="tiny muted">多 · 颜色越深，当天打卡越多</span></div></div>';
 }
 
 /* 每日回顾日志（读 days 映射，返回有记录的日期列表） */
