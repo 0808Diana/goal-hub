@@ -892,6 +892,18 @@ textarea.inp{min-height:70px;resize:vertical;line-height:1.55}
 .hm-cell.l3{background:#1a7f37}
 .hm-legend{display:flex;align-items:center;gap:5px;margin-top:8px;padding-top:10px;border-top:1px solid var(--line2)}
 .hm-legend .hm-cell{width:11px;height:11px}
+
+/* 日历格·备注标记 */
+.cal-cell.has-note{border-color:#ffd591;background:#fffaf0}
+.cal-cell.has-note:hover{border-color:var(--pp)}
+.cal-note{display:block;font-size:10.5px;line-height:1.35;color:#b6791f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;font-weight:600}
+.cal-sec-h{font-size:13px;font-weight:700;color:var(--ink2);display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.cal-note-list{display:flex;flex-direction:column;gap:6px}
+.cal-note-item{display:flex;align-items:center;gap:8px;background:var(--bg2);border-radius:9px;padding:6px 8px}
+.cal-note-item .cal-note-tx{flex:1;font-size:13px;color:var(--ink);word-break:break-all}
+.cal-note-item.done .cal-note-tx{text-decoration:line-through;color:var(--muted)}
+.cal-note-add{display:flex;gap:6px;margin-top:10px}
+.cal-note-add .inp{flex:1}
 </style>
 </head>
 <body>
@@ -1006,7 +1018,7 @@ var S = null;
 /* 部署后由脚本填入公开链接；非空时「我的」里会出现可复制的嵌入地址 */
 var EMBED_URL = '';
 
-function blank(){ return { version:VERSION, goals:[], records:[], nodes:[], weekly:{}, settings:{ tab:'today', bannerHideUntil:0, drafts:{}, punch:{}, statusByDate:{}, mapView:{ focus:'center', dir:null, node:null }, todayFilter:'today', todayFocusNode:null, days:{}, mitLog:[], dailyLog:[] } }; }
+function blank(){ return { version:VERSION, goals:[], records:[], nodes:[], weekly:{}, settings:{ tab:'today', bannerHideUntil:0, drafts:{}, punch:{}, notes:{}, statusByDate:{}, mapView:{ focus:'center', dir:null, node:null }, todayFilter:'today', todayFocusNode:null, days:{}, mitLog:[], dailyLog:[] } }; }
 
 /* 归一化 / 旧版本迁移：把任何历史形态的数据整理成当前结构 */
 function normalize(raw){
@@ -1129,6 +1141,7 @@ function normalize(raw){
   if(!out.settings.punch || typeof out.settings.punch !== 'object') out.settings.punch = {};
   if(!Array.isArray(out.settings.mitLog)) out.settings.mitLog = [];
   if(!Array.isArray(out.settings.dailyLog)) out.settings.dailyLog = [];
+  if(!out.settings.notes || typeof out.settings.notes !== 'object') out.settings.notes = {};
   migrateDays(out.settings);
   if(Number(raw.version||0) !== VERSION) changed++;
   out.__migrated = changed;
@@ -2937,23 +2950,36 @@ function renderCalendar(){
       return '<span class="cal-dot" style="background:'+(g?g.color:'#ccc')+'" title="'+esc(g?g.name:'')+'"></span>';
     }).join('');
     var more = gids.length > 6 ? '<span class="cal-more">+'+(gids.length-6)+'</span>' : '';
+    var notes = (S.settings.notes && S.settings.notes[date]) || [];
+    var noteHTML = '';
+    if(notes.length){
+      var first = notes[0].text || '';
+      var label = first.length > 9 ? first.slice(0,9)+'…' : first;
+      noteHTML = '<span class="cal-note" title="'+esc(notes.map(function(n){ return (n.done?'✓ ':'• ')+n.text; }).join('\n'))+'">'+
+        esc(label)+(notes.length>1 ? (' +'+(notes.length-1)) : '')+'</span>';
+    }
     var isToday = date === todayStr();
-    html += '<div class="cal-cell'+(isToday?' today':'')+(gids.length?' has':'')+'" data-act="cal-day" data-date="'+date+'">'+
+    var cls = 'cal-cell'+(isToday?' today':'')+(gids.length?' has':'')+(notes.length?' has-note':'');
+    html += '<div class="'+cls+'" data-act="cal-day" data-date="'+date+'">'+
       '<span class="cal-num">'+d+'</span>'+
       (gids.length ? '<span class="cal-dots">'+dots+more+'</span>' : '')+
+      noteHTML+
       '</div>';
   }
   html += '</div>';
-  html += '<div class="tiny muted" style="margin-top:10px">每个色点 = 当天打卡的一个目标（含已完成），点日期看详情。</div>';
+  html += '<div class="tiny muted" style="margin-top:10px">每个色点 = 当天打卡的一个目标（含已完成）；<b style="color:var(--ink2)">点任意日期</b>可记「当日提醒 / 备注」（如看医生、参加活动），有备注的格子会高亮并显示文字。</div>';
   return html;
 }
-function openCalDay(date){
+function calDayBody(date){
   var recs = S.records.filter(function(r){ return r.date === date; }).sort(function(a,b){ return (b.minutes||0)-(a.minutes||0); });
-  var body;
+  var notes = (S.settings.notes && S.settings.notes[date]) || [];
+  var html = '';
+  /* 打卡记录 */
+  html += '<div class="cal-sec-h">'+ic('chart',15)+'打卡记录</div>';
   if(!recs.length){
-    body = '<div class="tiny muted" style="padding:16px;text-align:center">这一天没有打卡记录</div>';
+    html += '<div class="tiny muted" style="padding:6px 0 4px">这一天没有打卡记录</div>';
   }else{
-    body = recs.map(function(r){
+    html += recs.map(function(r){
       var g = goalById(r.goalId);
       return '<div style="padding:9px 0;border-bottom:1px solid var(--line)">'+
         '<div style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:3px;background:'+(g?g.color:'#ccc')+'"></span>'+
@@ -2963,7 +2989,33 @@ function openCalDay(date){
         '</div>';
     }).join('');
   }
-  openSheet(md(date)+' 打卡记录', body, '<button class="btn" data-act="close-modal">关闭</button>', {});
+  /* 当日提醒 / 备注 */
+  html += '<div class="cal-sec-h" style="margin-top:14px">'+ic('note',15)+'当日提醒 / 备注 <span class="tiny muted" style="font-weight:400">写下来提醒自己，比如去看医生、参加活动</span></div>';
+  html += '<div class="cal-note-list">';
+  if(!notes.length){
+    html += '<div class="tiny muted">还没有备注，下面写一条吧。</div>';
+  }else{
+    html += notes.map(function(n, i){
+      return '<div class="cal-note-item'+(n.done?' done':'')+'">'+
+        '<button class="mitchk'+(n.done?' on':'')+'" data-act="note-toggle" data-d="'+date+'" data-i="'+i+'" aria-label="标记完成">'+ic('check',12)+'</button>'+
+        '<span class="cal-note-tx">'+esc(n.text)+'</span>'+
+        '<button class="mitclear" data-act="note-del" data-d="'+date+'" data-i="'+i+'" aria-label="删除">'+ic('x',12)+'</button>'+
+      '</div>';
+    }).join('');
+  }
+  html += '</div>';
+  html += '<div class="cal-note-add">'+
+    '<input class="inp" type="text" placeholder="如：去看医生 15:00、参加活动…" data-act="note-input" data-d="'+date+'" maxlength="120">'+
+    '<button class="btn sm pri" data-act="note-add" data-d="'+date+'">添加</button>'+
+  '</div>';
+  return html;
+}
+function openCalDay(date){
+  openSheet(md(date)+' 当日记录', calDayBody(date), '<button class="btn" data-act="close-modal">关闭</button>', { calDate: date });
+}
+function refreshCalDayBody(date){
+  var sb = modalRoot.querySelector('.sb');
+  if(sb) sb.innerHTML = calDayBody(date);
 }
 
 /* ---------------------------- 10. 周报 ---------------------------- */
@@ -4773,6 +4825,33 @@ document.addEventListener('click', function(e){
       openCalDay(t.getAttribute('data-date'));
       break;
     }
+    case 'note-add': {
+      var ndate = t.getAttribute('data-d');
+      var ninp = document.querySelector('.sb [data-act="note-input"][data-d="'+ndate+'"]');
+      var nval = ninp ? ninp.value.trim() : '';
+      if(!nval){ toast('先写点什么吧'); break; }
+      S.settings.notes = S.settings.notes || {};
+      S.settings.notes[ndate] = S.settings.notes[ndate] || [];
+      S.settings.notes[ndate].push({ text: nval, done:false });
+      save(); refreshCalDayBody(ndate); renderBoard();
+      break;
+    }
+    case 'note-toggle': {
+      var tdate = t.getAttribute('data-d'), ti = +t.getAttribute('data-i');
+      var tarr = (S.settings.notes && S.settings.notes[tdate]) || [];
+      if(tarr[ti]){ tarr[ti].done = !tarr[ti].done; save(); refreshCalDayBody(tdate); }
+      break;
+    }
+    case 'note-del': {
+      var ddate = t.getAttribute('data-d'), di = +t.getAttribute('data-i');
+      var darr = (S.settings.notes && S.settings.notes[ddate]) || [];
+      if(darr[di]){
+        darr.splice(di,1);
+        if(!darr.length) delete S.settings.notes[ddate];
+        save(); refreshCalDayBody(ddate); renderBoard();
+      }
+      break;
+    }
     case 'clear-today-focus': {
       S.settings.todayFocusNode = null;
       save(); renderAll();
@@ -5033,6 +5112,10 @@ document.addEventListener('keydown', function(e){
   if(e.key === 'Escape' && modalRoot.classList.contains('on')) closeModal();
   if(e.key === 'Enter' && e.target && e.target.getAttribute && e.target.getAttribute('data-act') === 'punch-input' && e.target.getAttribute('data-f') === 'amount' && e.target.tagName === 'INPUT'){
     doPunch(e.target.getAttribute('data-id'));
+  }
+  if(e.key === 'Enter' && e.target && e.target.getAttribute && e.target.getAttribute('data-act') === 'note-input' && e.target.tagName === 'INPUT'){
+    var nb = e.target.parentElement && e.target.parentElement.querySelector('[data-act="note-add"]');
+    if(nb) nb.click();
   }
 });
 $('#fileIn').addEventListener('change', function(e){
