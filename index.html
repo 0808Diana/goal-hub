@@ -1680,10 +1680,10 @@ function seed(){
     obstacle:'周末一整天都不想碰电脑，一拖就是两天',
     plan:'如果周末不想学，就只看 10 分钟视频、不写代码，先把连续记录保住',
     tags:['示例','技能'] });
-  var gD = g({ name:'K12 AI 情报阅读', unit:'篇', total:INTEL_ITEMS.length, deadline:addDays(T, Math.ceil(INTEL_ITEMS.length/2*7)), color:'#ec4899',
+  var gD = g({ name:'K12 AI 情报阅读 · '+thisMonth(), unit:'篇', total:INTEL_ITEMS.length, deadline:addDays(T, Math.ceil(INTEL_ITEMS.length/2*7)), color:'#ec4899',
     obstacle:'资讯太多，容易扫一眼就过，什么都没记住',
     plan:'如果一周没读满 2 篇，就先挑热度最高的那篇，读完写一句「这篇讲了啥」',
-    tags:['情报','阅读'], isSample:false, isIntel:true,
+    tags:['情报','阅读'], isSample:false, isIntel:true, intelMonth:thisMonth(),
     cadence:{type:'weekly', per:2},
     items: INTEL_ITEMS.map(function(c){ return { id:uid(), title:c.t, source:c.s, url:c.u, date:c.d, heat:c.h, reason:c.r, cat:c.c, read:false }; })
   });
@@ -2429,7 +2429,7 @@ function renderToday(){
   var html = '<div class="pagehead"><div><h1>今天</h1>'+
     '<div class="sub">'+md(T)+' 周'+wdOf(T)+' · 共 '+list.length+' 个目标'+(todayTotal?('，今天已记 '+todayTotal+' 次'):'')+'</div></div>'+
     '<button class="btn pri" data-act="new-goal">'+ic('plus',16)+'新建目标</button>'+
-    (!intelGoal() ? '<button class="btn" data-act="add-intel" style="margin-left:8px">'+ic('layers',16)+'添加情报阅读任务</button>' : '')+
+    (!intelGoalOfThisMonth() ? '<button class="btn" data-act="add-intel" style="margin-left:8px">'+ic('layers',16)+'添加本月情报阅读任务</button>' : '')+
     (!fruitGoal() ? '<button class="btn" data-act="add-fruit" style="margin-left:8px">'+ic('leaf',16)+'添加水果饮食任务</button>' : '')+
     '</div>';
 
@@ -3485,8 +3485,29 @@ function doPunch(gid){
   renderAll();
 }
 
-/* ---------------------------- 13.5 情报阅读渠道管理 ---------------------------- */
-function intelGoal(){ return S.goals.filter(function(g){ return g.isIntel; })[0]; }
+/* ---------------------------- 13.5 情报阅读渠道管理 ----------------------------
+   情报阅读目标按月分桶：每个月一个独立目标（名字带 ·YYYY-MM），上月的保留为已完成记录，
+   不会被本月的刷新/新建覆盖。 */
+function thisMonth(){
+  var d = new Date();
+  return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2);
+}
+/* 返回指定月份的情报目标（无则 undefined） */
+function intelGoalOfMonth(m){
+  return S.goals.filter(function(g){ return g.isIntel && g.intelMonth===m; })[0];
+}
+/* 当前月份的情报目标 */
+function intelGoalOfThisMonth(){ return intelGoalOfMonth(thisMonth()); }
+/* 旧版情报目标没有 intelMonth 字段，把它们归入上一月，作为已完成历史保留（不再被本月同步覆盖） */
+function migrateIntelMonths(){
+  var legacy = S.goals.filter(function(g){ return g.isIntel && !g.intelMonth; });
+  if(!legacy.length) return;
+  var d = new Date(); d.setDate(1); d.setMonth(d.getMonth()-1);
+  var lm = d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2);
+  legacy.forEach(function(g){ g.intelMonth = lm; });
+}
+/* 兼容旧调用：intelGoal 现在指向「本月」目标 */
+function intelGoal(){ return intelGoalOfThisMonth(); }
 function intelReadMap(g){
   var m = {}; recsOf(g.id).forEach(function(r){ if(r.content) m[r.content] = (m[r.content]||0)+1; });
   return m;
@@ -3568,17 +3589,18 @@ function intelToggle(gid, itemId, fromModal){
   if(fromModal) refreshIntelBody();
 }
 function ensureIntel(){
-  if(intelGoal()){ toast('情报阅读任务已经在列表里了'); return; }
+  var m = thisMonth();
+  if(intelGoalOfMonth(m)){ toast('本月情报阅读任务已在列表中（'+m+'）'); return; }
   var T = todayStr();
-  var g = { id:uid(), name:'K12 AI 情报阅读', unit:'篇', total:INTEL_ITEMS.length,
+  var g = { id:uid(), name:'K12 AI 情报阅读 · '+m, unit:'篇', total:INTEL_ITEMS.length,
     deadline: addDays(T, Math.ceil(INTEL_ITEMS.length/2*7)), color:'#ec4899',
     obstacle:'资讯太多，容易扫一眼就过，什么都没记住',
     plan:'如果一周没读满 2 篇，就先挑热度最高的那篇，读完写一句「这篇讲了啥」',
-    tags:['情报','阅读'], isSample:false, isIntel:true, doneCelebrated:false, createdAt:T,
+    tags:['情报','阅读'], isSample:false, isIntel:true, intelMonth:m, doneCelebrated:false, createdAt:T,
     cadence:{type:'weekly', per:2},
     items: INTEL_ITEMS.map(function(c){ return { id:uid(), title:c.t, source:c.s, url:c.u, date:c.d, heat:c.h, reason:c.r, cat:c.c, read:false }; })
   };
-  S.goals.push(g); save(); renderAll(); toast('已添加「K12 AI 情报阅读」任务');
+  S.goals.push(g); save(); renderAll(); toast('已添加「K12 AI 情报阅读 · '+m+'」任务');
 }
 
 /* ---------------------------- 13.6 水果饮食（按月应季打卡） ---------------------------- */
@@ -3625,12 +3647,13 @@ function fruitPunch(c){
   '</div>';
 }
 
-/* 打开时把内嵌的最新 INTEL_ITEMS 同步进情报目标：按标题保留已读状态、刷新总数。
-   这样每月 1 号重新部署新清单后，用户下次打开即自动更新（数据仍在本地）。 */
+/* 打开时把内嵌的最新 INTEL_ITEMS 同步进「本月」情报目标：按标题保留已读状态、刷新总数。
+   只动当前月份的目标；上月的已完成目标保持原样（数据仍在本地）。 */
 function syncIntelItems(){
   if(!S || !S.goals || !INTEL_ITEMS || !INTEL_ITEMS.length) return;
-  var g = S.goals.filter(function(x){ return x.isIntel; })[0];
-  if(!g) return;
+  migrateIntelMonths();
+  var g = intelGoalOfThisMonth();
+  if(!g) return;  // 本月目标还没建，不动历史目标
   var readTitles = {};
   (g.items||[]).forEach(function(it){ if(it.read) readTitles[it.title] = 1; });
   var recTitles = {};
